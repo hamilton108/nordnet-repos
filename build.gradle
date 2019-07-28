@@ -1,0 +1,37 @@
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'java'
+
+apply from: '../gradlecommon/spring-boot-deps.gradle'
+apply from: '../gradlecommon/integrationTest.gradle'
+
+group = 'hamilton108'
+
+//archivesBaseName = 'netfondsrepos'
+
+version = '0.1'
+
+sourceCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter'
+    compile project(':oahu')
+    compile project(':critter-repos')
+    compile "org.slf4j:slf4j-api:$slf4jVersion"
+    compile "org.jsoup:jsoup:$jsoupVersion"
+    compile "net.sourceforge.htmlunit:htmlunit:$htmlUnitVersion"
+    testCompile "org.springframework.boot:spring-boot-starter-test"
+}
+
+/*
+test {
+    useJUnitPlatform()
+}
+*/
+
+bootJar.enabled = false
+jar.enabled = true
