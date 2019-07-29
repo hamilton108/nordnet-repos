@@ -4,13 +4,11 @@ import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import oahu.financial.html.EtradeDownloader;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.URL;
 import java.util.HashMap;
 
-public class DownloaderStub implements EtradeDownloader<Page, Serializable> {
+public class DownloaderStub implements EtradeDownloader<Page, TickerInfo, Serializable> {
     private boolean javaScriptEnabled = false;
     private WebClient webClient;
     private String storePath;
@@ -56,21 +54,20 @@ public class DownloaderStub implements EtradeDownloader<Page, Serializable> {
 
     @Override
     public Page downloadDerivatives() throws IOException {
-        //String url = String.format("file:///%s/derivatives.csv", storePath);
-        URL url = new File(String.format("%s/derivatives.csv", storePath)).toURI().toURL();
-        return webClient.getPage(url);
+        return null;
     }
-
-    //region interface EtradeDownloader
     @Override
-    public Page downloadDerivatives(String ticker) throws IOException {
-        return webClient.getPage(tickerUrl(ticker));
+    public Page downloadDerivatives(TickerInfo tickerInfo) throws IOException {
+        return webClient.getPage(tickerUrl(tickerInfo.getTicker()));
     }
 
     @Override
     public Page downloadIndex(String stockIndex) throws IOException {
         return null;
     }
+    //region interface EtradeDownloader
+    /*
+
 
     @Override
     public Page downloadPaperHistory(String ticker) throws IOException {
@@ -86,6 +83,7 @@ public class DownloaderStub implements EtradeDownloader<Page, Serializable> {
     public Page downloadPurchases(String ticker) throws IOException {
         return null;
     }
+     */
 
     //endregion interface EtradeDownloader
 

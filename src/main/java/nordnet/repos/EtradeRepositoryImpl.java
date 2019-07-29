@@ -1,15 +1,26 @@
 package nordnet.repos;
 
+import com.gargoylesoftware.htmlunit.Page;
+import nordnet.downloader.TickerInfo;
 import oahu.financial.Derivative;
 import oahu.financial.DerivativePrice;
 import oahu.financial.StockPrice;
+import oahu.financial.html.EtradeDownloader;
 import oahu.financial.repository.EtradeRepository;
+import oahu.financial.repository.StockMarketRepository;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Optional;
 
 public class EtradeRepositoryImpl implements EtradeRepository {
+    private EtradeDownloader<Page, TickerInfo, Serializable> downloader;
+    private StockMarketRepository stockMarketRepos;
+
     @Override
     public Optional<DerivativePrice> findDerivativePrice(Object optionInfo) {
         return Optional.empty();
@@ -58,5 +69,21 @@ public class EtradeRepositoryImpl implements EtradeRepository {
     @Override
     public void invalidateCache() {
 
+    }
+
+    public void setDownloader(EtradeDownloader downloader) {
+        this.downloader = downloader;
+    }
+
+    //-----------------------------------------------------------
+    //-------------- Package/private methods --------------------
+    //-----------------------------------------------------------
+    Document getDocument(TickerInfo tickerInfo) throws IOException {
+        Page page = downloader.downloadDerivatives(tickerInfo);
+        return Jsoup.parse(page.getWebResponse().getContentAsString());
+    }
+
+    public void setStockMarketRepository(StockMarketRepository stockMarketRepos) {
+        this.stockMarketRepos = stockMarketRepos;
     }
 }
