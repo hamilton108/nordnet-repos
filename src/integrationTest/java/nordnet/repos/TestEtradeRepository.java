@@ -46,11 +46,6 @@ public class TestEtradeRepository {
         assertThat(doc).isNotNull();
     }
 
-    private Document getDocument() {
-        Class[] paramsTypes = {TickerInfo.class};
-        Object[] params = {tickerInfo};
-        return TestUtil.callMethodFor(EtradeRepositoryImpl.class, repos, "getDocument", paramsTypes, params);
-    }
     @Test
     public void testStockPrice() {
         Stock stock = stockMarketRepos.findStock(tickerInfo.getTicker());
@@ -61,6 +56,7 @@ public class TestEtradeRepository {
         assertThat(stockPrice.isPresent()).isEqualTo(true);
         validateStockPrice(stockPrice.get());
     }
+
     private Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
         Class[] paramsTypes = {Document.class, Stock.class};
         Object[] params = {doc,stock};
@@ -81,5 +77,10 @@ public class TestEtradeRepository {
 
         long expectedVol = 4777330;
         assertThat(stockPrice.getVolume()).isEqualTo(expectedVol);
+    }
+    private Document getDocument() {
+        Class[] paramsTypes = {TickerInfo.class};
+        Object[] params = {tickerInfo};
+        return TestUtil.callMethodFor(EtradeRepositoryImpl.class, repos, "getDocument", paramsTypes, params);
     }
 }
