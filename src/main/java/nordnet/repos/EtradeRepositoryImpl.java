@@ -3,6 +3,7 @@ package nordnet.repos;
 import com.gargoylesoftware.htmlunit.Page;
 import critterrepos.beans.StockPriceBean;
 import nordnet.downloader.TickerInfo;
+import oahu.dto.Tuple;
 import oahu.dto.Tuple2;
 import oahu.financial.Derivative;
 import oahu.financial.DerivativePrice;
@@ -15,6 +16,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -24,12 +26,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Optional;
 
-public class EtradeRepositoryImpl implements EtradeRepository {
+@Component
+public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private EtradeDownloader<Page, TickerInfo, Serializable> downloader;
     private StockMarketRepository stockMarketRepos;
 
     @Override
-    public Optional<DerivativePrice> findDerivativePrice(Object optionInfo) {
+    public Optional<DerivativePrice> findDerivativePrice(Tuple<String> optionInfo) {
         return Optional.empty();
     }
 

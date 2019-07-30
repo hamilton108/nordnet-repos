@@ -51,7 +51,7 @@ public class TestEtradeRepository {
         Stock stock = stockMarketRepos.findStock(tickerInfo.getTicker());
 
         Document doc = getDocument();
-
+        var jada = new ArrayIndexOutOfBoundsException();
         Optional<StockPrice> stockPrice = createStockPrice(doc, stock);
         assertThat(stockPrice.isPresent()).isEqualTo(true);
         validateStockPrice(stockPrice.get());
