@@ -33,9 +33,15 @@ test {
     useJUnitPlatform()
 }
 */
-task copyJarToBin(type: Copy, dependsOn: jar) {
-    from jar.archivePath // shortcut for createJar.outputs.files
-    into "c:/opt/lx/harborview/build/libs/BOOT-INF/lib/"
+
+task copyJarToDist(type: Copy, dependsOn: jar) {
+    from jar.archivePath
+    into "/home/rcs/opt/java/harborview/dist/"
+}
+
+task copyJarToDistWin(type: Copy, dependsOn: jar) {
+    from jar.archivePath
+    into "c:/opt/lx/harborview/dist/"
 }
 
 bootJar.enabled = false
