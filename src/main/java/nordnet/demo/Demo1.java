@@ -4,6 +4,8 @@ import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import nordnet.downloader.TickerInfo;
 import oahu.financial.html.EtradeDownloader;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -38,13 +40,18 @@ public class Demo1 {
       }
    }
 
-   public Page ax() {
+   private Page fetchPage(String ticker) {
       MyDownloader myDownloader = new MyDownloader();
       try {
-         return myDownloader.downloadDerivatives(new TickerInfo("EQNR"));
+         return myDownloader.downloadDerivatives(new TickerInfo(ticker));
       } catch (IOException e) {
          e.printStackTrace();
          return null;
       }
+   }
+   public Document getDocument() throws IOException {
+      Page page = fetchPage("EQNR");
+      assert page != null;
+      return Jsoup.parse(page.getWebResponse().getContentAsString());
    }
 }
