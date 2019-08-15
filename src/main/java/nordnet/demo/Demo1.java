@@ -6,6 +6,7 @@ import nordnet.downloader.TickerInfo;
 import oahu.financial.html.EtradeDownloader;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -14,10 +15,13 @@ public class Demo1 {
    class MyDownloader implements EtradeDownloader<Page, TickerInfo, Serializable> {
       private boolean javaScriptEnabled = false;
       private WebClient webClient;
-      private String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+      //private String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+      private String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+      //private String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/";
 
       public MyDownloader() {
          webClient = new WebClient();
+         webClient.getOptions().setJavaScriptEnabled(false);
       }
 
       @Override
@@ -51,7 +55,22 @@ public class Demo1 {
    }
    public Document getDocument() throws IOException {
       Page page = fetchPage("EQNR");
+      //Page page = fetchPage("EQNR-2020-19-06");
       assert page != null;
       return Jsoup.parse(page.getWebResponse().getContentAsString());
+   }
+
+   public Elements getForClass(Document doc, String htmlClass) {
+      return doc.getElementsByClass(htmlClass);
+   }
+
+   public Elements getEl() {
+      try {
+         Document doc = getDocument();
+         return getForClass(doc, "c01408");
+      } catch (IOException e) {
+         e.printStackTrace();
+         return null;
+      }
    }
 }
