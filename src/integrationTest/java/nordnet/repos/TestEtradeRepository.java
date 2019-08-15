@@ -20,7 +20,8 @@ import java.util.Optional;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private static EtradeRepositoryImpl repos;
     private static StockMarketRepository stockMarketRepos;
@@ -51,10 +52,9 @@ public class TestEtradeRepository {
         Stock stock = stockMarketRepos.findStock(tickerInfo.getTicker());
 
         Document doc = getDocument();
-        var jada = new ArrayIndexOutOfBoundsException();
         Optional<StockPrice> stockPrice = createStockPrice(doc, stock);
         assertThat(stockPrice.isPresent()).isEqualTo(true);
-        validateStockPrice(stockPrice.get());
+        stockPrice.ifPresent(this::validateStockPrice);
     }
 
     private Optional<StockPrice> createStockPrice(Document doc, Stock stock) {

@@ -11,7 +11,7 @@ group = 'hamilton108'
 
 version = '0.1'
 
-sourceCompatibility = '1.8'
+sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
@@ -32,6 +32,10 @@ test {
     useJUnitPlatform()
 }
 */
+task copyJarToBin(type: Copy, dependsOn: jar) {
+    from jar.archivePath // shortcut for createJar.outputs.files
+    into "c:/opt/lx/harborview/build/libs/BOOT-INF/lib/"
+}
 
 bootJar.enabled = false
 jar.enabled = true
