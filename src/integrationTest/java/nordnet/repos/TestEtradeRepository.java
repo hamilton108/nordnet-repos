@@ -9,6 +9,7 @@ import oahu.financial.html.WebClientManager;
 import oahu.financial.repository.StockMarketRepository;
 import oahu.testing.TestUtil;
 import static  org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.data.Offset.offset;
 
 import org.jsoup.nodes.Document;
@@ -23,8 +24,8 @@ import java.util.Optional;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private static EtradeRepositoryImpl repos;
     private static StockMarketRepository stockMarketRepos;
@@ -80,6 +81,21 @@ public class TestEtradeRepository {
         Element row9 = tds.get(9);
         Element cell9 = row9.getElementsByClass("c01438").first();
         assertThat(cell9.text()).isEqualTo("160.05");
+    }
+
+    @Test
+    public void testC01408Table2() {
+        Document doc = getCachedDocument();
+        Elements tables = doc.getElementsByClass("c01408");
+
+        Element table2 = tables.get(2);
+        Elements rows = table2.getElementsByTag("tr");
+        assertThat(rows.size()).isEqualTo(21);
+
+        Element row1 = rows.get(5); // rows.first();
+        Elements tds = row1.getElementsByTag("td");
+        assertThat(tds.size()).isEqualTo(16);
+
     }
 
     public void testStockPrice() {
