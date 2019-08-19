@@ -86,17 +86,18 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
 
     //-----------------------------------------------------------
-    //-------------- Package/private methods --------------------
+    //--------------------- Properties --------------------------
     //-----------------------------------------------------------
-    Document getDocument(TickerInfo tickerInfo) throws IOException {
-        Page page = downloader.downloadDerivatives(tickerInfo);
-        return Jsoup.parse(page.getWebResponse().getContentAsString());
-    }
-
     public void setStockMarketRepository(StockMarketRepository stockMarketRepos) {
         this.stockMarketRepos = stockMarketRepos;
     }
+
+    //-----------------------------------------------------------
+    //-------------- Package/private methods --------------------
+    //-----------------------------------------------------------
     Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
+        return Optional.empty();
+        /*
         Element top = doc.getElementById("updatetable1");
         if (top == null) {
             return Optional.empty();
@@ -129,7 +130,15 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         catch (NumberFormatException ex) {
             return Optional.empty();
         }
+
+         */
     }
+
+    Document getDocument(TickerInfo tickerInfo) throws IOException {
+        Page page = downloader.downloadDerivatives(tickerInfo);
+        return Jsoup.parse(page.getWebResponse().getContentAsString());
+    }
+
     Tuple2<LocalDate, LocalTime> getTimeInfo(Element el) {
         // fredag 23/11-2018 18:30:05
         String txt = el.text();

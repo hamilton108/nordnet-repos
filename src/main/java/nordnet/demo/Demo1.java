@@ -6,6 +6,7 @@ import nordnet.downloader.TickerInfo;
 import oahu.financial.html.EtradeDownloader;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
@@ -64,13 +65,21 @@ public class Demo1 {
       return doc.getElementsByClass(htmlClass);
    }
 
-   public Elements getEl() {
+   public Elements getEls() {
       try {
          Document doc = getDocument();
-         return getForClass(doc, "c01408");
+         Element table = getForClass(doc, "c01408").first();
+         Element row = table.getElementsByTag("tr").first();
+         Elements tds = row.getElementsByTag("td");
+         return tds;
       } catch (IOException e) {
          e.printStackTrace();
          return null;
       }
+   }
+   public Element getEl() {
+      Elements elements = getEls();
+      Element row8 = elements.get(8);
+      return row8.getElementsByClass("c01438").first();
    }
 }
