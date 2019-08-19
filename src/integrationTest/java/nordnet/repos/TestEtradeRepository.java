@@ -2,6 +2,7 @@ package nordnet.repos;
 
 import nordnet.downloader.DownloaderStub;
 import nordnet.downloader.TickerInfo;
+import static nordnet.html.DerivativesEnum.*;
 import oahu.financial.Stock;
 import oahu.financial.StockPrice;
 import oahu.financial.html.EtradeDownloader;
@@ -24,8 +25,8 @@ import java.util.Optional;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private static EtradeRepositoryImpl repos;
     private static StockMarketRepository stockMarketRepos;
@@ -74,7 +75,7 @@ public class TestEtradeRepository {
         Elements tds = row1.getElementsByTag("td");
         assertThat(tds.size()).isEqualTo(22);
 
-        Element row8 = tds.get(8);
+        Element row8 = tds.get(STOCK_PRICE_LATEST.getIndex());
         Element cell8 = row8.getElementsByClass("c01438").first();
         assertThat(cell8.text()).isEqualTo("160.15");
 
@@ -96,6 +97,11 @@ public class TestEtradeRepository {
         Elements tds = row1.getElementsByTag("td");
         assertThat(tds.size()).isEqualTo(16);
 
+        Element tickerBuy = tds.get(TICKER_BUY.getIndex());
+        assertThat(tickerBuy.text()).isEqualTo("EQNR0F280");
+
+        Element x = tds.get(X.getIndex());
+        assertThat(x.text()).isEqualTo("280 280,00");
     }
 
     public void testStockPrice() {
