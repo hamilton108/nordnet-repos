@@ -18,7 +18,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -30,6 +32,8 @@ import java.util.Optional;
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private EtradeDownloader<Page, TickerInfo, Serializable> downloader;
     private StockMarketRepository stockMarketRepos;
+
+    private String storePath;
 
     @Override
     public Optional<DerivativePrice> findDerivativePrice(Tuple<String> optionInfo) {
@@ -149,4 +153,23 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM-yyyy");
     private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    public void initStockPrices() {
+
+        try {
+            FileWriter writer = new FileWriter(String.format("%s/openingPrices", storePath));
+            PrintWriter printWriter = new PrintWriter(writer);
+            printWriter.println("A");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setStorePath(String storePath) {
+        this.storePath = storePath;
+    }
+
+    public String getStorePath() {
+        return storePath;
+    }
 }

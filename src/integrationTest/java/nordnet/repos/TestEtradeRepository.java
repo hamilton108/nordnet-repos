@@ -21,12 +21,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.File;
 import java.util.Optional;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private static EtradeRepositoryImpl repos;
     private static StockMarketRepository stockMarketRepos;
@@ -35,6 +36,7 @@ public class TestEtradeRepository {
     @BeforeClass
     public static void setup() {
         repos = new EtradeRepositoryImpl();
+        repos.setStorePath(storePath);
 
         stockMarketRepos = new StockMarketReposStub();
         repos.setStockMarketRepository(stockMarketRepos);
@@ -102,6 +104,13 @@ public class TestEtradeRepository {
 
         Element x = tds.get(X.getIndex());
         assertThat(x.text()).isEqualTo("280 280,00");
+    }
+
+    @Test
+    public void testOpeningPrices() {
+        repos.initStockPrices();
+        File openingPrices = new File(repos.getStorePath());
+        assertThat(openingPrices.exists()).isEqualTo(true);
     }
 
     public void testStockPrice() {
