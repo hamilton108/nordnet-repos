@@ -6,7 +6,6 @@ import static nordnet.html.DerivativesEnum.*;
 import oahu.financial.Stock;
 import oahu.financial.StockPrice;
 import oahu.financial.html.EtradeDownloader;
-import oahu.financial.html.WebClientManager;
 import oahu.financial.repository.StockMarketRepository;
 import oahu.testing.TestUtil;
 import static  org.assertj.core.api.Assertions.assertThat;
@@ -17,11 +16,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
+import java.util.List;
 import java.util.Optional;
 
 @RunWith(SpringRunner.class)
@@ -49,6 +50,7 @@ public class TestEtradeRepository {
     }
 
     @Test
+    @Ignore
     public void testDocIsNotNull() {
         Document doc = getDocument();
         assertThat(doc).isNotNull();
@@ -64,6 +66,7 @@ public class TestEtradeRepository {
     }
 
     @Test
+    @Ignore
     public void testC01408Table1() {
         Document doc = getCachedDocument();
         Elements tables = doc.getElementsByClass("c01408");
@@ -77,16 +80,21 @@ public class TestEtradeRepository {
         Elements tds = row1.getElementsByTag("td");
         assertThat(tds.size()).isEqualTo(22);
 
-        Element row8 = tds.get(STOCK_PRICE_LATEST.getIndex());
-        Element cell8 = row8.getElementsByClass("c01438").first();
-        assertThat(cell8.text()).isEqualTo("160.15");
+        Element rowClose = tds.get(STOCK_PRICE_CLOSE.getIndex());
+        Element cellClose = rowClose.getElementsByClass("c01438").first();
+        assertThat(cellClose.text()).isEqualTo("160.15");
 
-        Element row9 = tds.get(9);
-        Element cell9 = row9.getElementsByClass("c01438").first();
-        assertThat(cell9.text()).isEqualTo("160.05");
+        Element rowHi = tds.get(STOCK_PRICE_Hi.getIndex());
+        Element cellHi = rowHi.getElementsByClass("c01438").first();
+        assertThat(cellHi.text()).isEqualTo("160.95");
+
+        Element rowLo = tds.get(STOCK_PRICE_Lo.getIndex());
+        Element cellLo = rowLo.getElementsByClass("c01438").first();
+        assertThat(cellLo.text()).isEqualTo("157.2");
     }
 
     @Test
+    @Ignore
     public void testC01408Table2() {
         Document doc = getCachedDocument();
         Elements tables = doc.getElementsByClass("c01408");
@@ -107,10 +115,27 @@ public class TestEtradeRepository {
     }
 
     @Test
+    public void testOpeningPrices_no_file() {
+        File openingPricesFileName = getOpeningPricesFile();
+        boolean deleteResult = openingPricesFileName.delete();
+        testOpeningPrices();
+    }
+
+    @Test
+    public void testOpeningPrices_already_initialized() {
+        testOpeningPrices();
+    }
+
     public void testOpeningPrices() {
-        repos.initStockPrices();
-        File openingPrices = new File(repos.getStorePath());
-        assertThat(openingPrices.exists()).isEqualTo(true);
+        repos.initOpeningPrices();
+        File openingPricesFileName = getOpeningPricesFile();
+        assertThat(openingPricesFileName.exists()).isEqualTo(true);
+        List<StockPrice> openingPrices = repos.getOpeningPrices();
+        assertThat(openingPrices.size()).isEqualTo(3);
+    }
+
+    private File getOpeningPricesFile() {
+        return new File(repos.getOpeningPricesFileName());
     }
 
     public void testStockPrice() {

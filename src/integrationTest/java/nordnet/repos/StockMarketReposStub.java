@@ -1,10 +1,12 @@
 package nordnet.repos;
 
+import critterrepos.beans.StockBean;
 import oahu.exceptions.FinancialException;
 import oahu.financial.*;
 import oahu.financial.repository.StockMarketRepository;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +30,18 @@ public class StockMarketReposStub implements StockMarketRepository {
 
     @Override
     public Collection<Stock> getStocks() {
-        return null;
+        Collection<Stock> result = new ArrayList<>();
+        result.add(createStock(1, "NHY"));
+        result.add(createStock(2, "EQNR"));
+        result.add(createStock(3, "YAR"));
+        return result;
+    }
+
+    private Stock createStock(int oid, String ticker) {
+        StockBean s = new StockBean();
+        s.setOid(oid);
+        s.setTicker(ticker);
+        return s;
     }
 
     @Override

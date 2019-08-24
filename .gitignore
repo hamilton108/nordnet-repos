@@ -3,3 +3,5 @@ out/
 .gradle/
 .idea/
 tmp/
+src/integrationTest/resources/html/derivatives/openingPrices
+src/integrationTest/resources/html/derivatives/openingPrices.txt

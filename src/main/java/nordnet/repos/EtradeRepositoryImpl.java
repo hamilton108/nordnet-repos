@@ -16,6 +16,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.FileWriter;
@@ -25,8 +26,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
 
 @Component
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
@@ -34,6 +34,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private StockMarketRepository stockMarketRepos;
 
     private String storePath;
+
+    private List<StockPrice> openingPrices = new ArrayList<>();
 
     @Override
     public Optional<DerivativePrice> findDerivativePrice(Tuple<String> optionInfo) {
@@ -85,15 +87,62 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     }
 
+    //-----------------------------------------------------------
+    //--------------------- Properties --------------------------
+    //-----------------------------------------------------------
+    @Autowired
     public void setDownloader(EtradeDownloader downloader) {
         this.downloader = downloader;
     }
 
-    //-----------------------------------------------------------
-    //--------------------- Properties --------------------------
-    //-----------------------------------------------------------
+    @Autowired
     public void setStockMarketRepository(StockMarketRepository stockMarketRepos) {
         this.stockMarketRepos = stockMarketRepos;
+    }
+
+    public void setStorePath(String storePath) {
+        this.storePath = storePath;
+    }
+
+    public String getStorePath() {
+        return storePath;
+    }
+    public String getOpeningPricesFileName() {
+        return String.format("%s/openingPrices.txt",storePath);
+    }
+
+    public List<StockPrice> getOpeningPrices() {
+        return openingPrices;
+    }
+    public void setOpeningPrices(List<StockPrice> openingPrices) {
+        this.openingPrices = openingPrices;
+    }
+
+    //-----------------------------------------------------------
+    //-------------- Public methods --------------------
+    //-----------------------------------------------------------
+    public void initOpeningPrices() {
+        if (openingPrices.size() > 0) {
+            return;
+        }
+        try {
+
+            FileWriter writer = new FileWriter(getOpeningPricesFileName());
+            PrintWriter printWriter = new PrintWriter(writer);
+            Collection<Stock> stocks = stockMarketRepos.getStocks();
+            for (Stock stock : stocks) {
+                double opn = 162.10;
+                String tik = stock.getTicker();
+                printWriter.println(String.format(Locale.US,"%s:%.2f", tik, opn));
+                StockPriceBean price = new StockPriceBean();
+                price.setOpn(opn);
+                price.setStock(stock);
+                openingPrices.add(price);
+            }
+            printWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     //-----------------------------------------------------------
@@ -153,23 +202,4 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM-yyyy");
     private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-
-    public void initStockPrices() {
-
-        try {
-            FileWriter writer = new FileWriter(String.format("%s/openingPrices", storePath));
-            PrintWriter printWriter = new PrintWriter(writer);
-            printWriter.println("A");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setStorePath(String storePath) {
-        this.storePath = storePath;
-    }
-
-    public String getStorePath() {
-        return storePath;
-    }
 }
