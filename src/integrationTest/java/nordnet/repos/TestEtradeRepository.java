@@ -27,8 +27,8 @@ import java.util.Optional;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private static EtradeRepositoryImpl repos;
     private static StockMarketRepository stockMarketRepos;
