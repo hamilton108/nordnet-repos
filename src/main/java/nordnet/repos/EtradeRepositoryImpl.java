@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static nordnet.html.DerivativesEnum.*;
+import static nordnet.html.DerivativesStringEnum.*;
 
 @Component
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
@@ -136,6 +137,9 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
             Collection<Stock> stocks = stockMarketRepos.getStocks();
             for (Stock stock : stocks) {
                 String tik = stock.getTicker();
+                if (!tik.equals("NHY")) {
+                    continue;
+                }
                 TickerInfo tickerInfo = new TickerInfo(tik);
                 Document doc = getDocument(tickerInfo);
                 Elements tds = stockPriceTds(doc);
@@ -182,7 +186,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
 
     private Elements stockPriceTds(Document doc)  {
-        Elements tables = doc.getElementsByClass("c01408");
+        //Elements tables = doc.getElementsByClass("c01408");
+        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
 
         Element table1 = tables.first();
         Elements rows = table1.getElementsByTag("tr");
@@ -196,7 +201,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
     private Element stockPriceElement(Elements tds, DerivativesEnum rowIndex) {
         Element row = tds.get(rowIndex.getIndex());
-        return row.getElementsByClass("c01438").first();
+        //return row.getElementsByClass("c01438").first();
+        return row.getElementsByClass(TD_CLASS.getText()).first();
     }
 
     Document getDocument(TickerInfo tickerInfo) throws IOException {

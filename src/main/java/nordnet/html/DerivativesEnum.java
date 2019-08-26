@@ -1,7 +1,5 @@
 package nordnet.html;
 
-import org.w3c.dom.DOMError;
-
 public enum DerivativesEnum {
    STOCK_PRICE_CLOSE(8),
    STOCK_PRICE_Hi(11),

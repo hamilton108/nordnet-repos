@@ -32,7 +32,8 @@ public class TestEtradeRepository {
 
     private static EtradeRepositoryImpl repos;
     private static StockMarketRepository stockMarketRepos;
-    private TickerInfo tickerInfo = new TickerInfo("EQNR");
+    //private TickerInfo tickerInfo = new TickerInfo("EQNR");
+    private TickerInfo tickerInfo = new TickerInfo("NHY");
 
     @BeforeClass
     public static void setup() {
