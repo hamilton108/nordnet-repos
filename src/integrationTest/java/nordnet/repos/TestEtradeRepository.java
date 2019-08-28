@@ -2,6 +2,7 @@ package nordnet.repos;
 
 import nordnet.downloader.DownloaderStub;
 import nordnet.downloader.TickerInfo;
+import oahu.financial.StockPrice;
 import oahu.financial.html.EtradeDownloader;
 import oahu.testing.TestUtil;
 import org.jsoup.nodes.Document;
@@ -15,6 +16,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Optional;
 
 import static nordnet.html.DerivativesEnum.*;
 import static nordnet.html.DerivativesStringEnum.TABLE_CLASS;
@@ -113,13 +115,27 @@ public class TestEtradeRepository {
         Map<String,Double> openingPrices = repos.getOpeningPrices();
 
         double nhy = openingPrices.get("NHY");
-        assertThat(nhy).isEqualTo(28.37);
+        assertThat(nhy).isEqualTo(28.00);
 
         double eqnr = openingPrices.get("EQNR");
-        assertThat(eqnr).isEqualTo(150.90);
+        assertThat(eqnr).isEqualTo(150.00);
 
         double yar = openingPrices.get("YAR");
         assertThat(yar).isEqualTo(373.40);
+    }
+
+    @Test
+    public void testCreateStockPrice_oid() {
+        repos.setOpeningPricesFileName("openingPrices_initialized.txt");
+        repos.initOpeningPrices();
+        Optional<StockPrice> price = repos.stockPrice(2);
+        assertThat(price).isNotEmpty();
+        price.ifPresent(s -> {
+            assertThat(s.getOpn()).isEqualTo(150.00);
+            assertThat(s.getHi()).isEqualTo(150.85);
+            assertThat(s.getLo()).isEqualTo(149.10);
+            assertThat(s.getCls()).isEqualTo(149.90);
+        });
     }
 
     private void testOpeningPrices() {

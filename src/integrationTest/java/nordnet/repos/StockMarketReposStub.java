@@ -25,7 +25,7 @@ public class StockMarketReposStub implements StockMarketRepository {
 
     @Override
     public Stock findStock(String ticker) {
-        return null;
+        return createStock(getOidFor(ticker), ticker);
     }
 
     @Override
@@ -35,6 +35,15 @@ public class StockMarketReposStub implements StockMarketRepository {
         result.add(createStock(2, "EQNR"));
         result.add(createStock(3, "YAR"));
         return result;
+    }
+
+    private int getOidFor(String ticker) {
+        switch (ticker) {
+            case "NHY": return 1;
+            case "EQNR": return 2;
+            case "YAR": return 3;
+            default: return -1;
+        }
     }
 
     private Stock createStock(int oid, String ticker) {
@@ -86,6 +95,11 @@ public class StockMarketReposStub implements StockMarketRepository {
 
     @Override
     public String getTickerFor(int oid) {
-        return null;
+        switch (oid) {
+            case 1: return "NHY";
+            case 2: return "EQNR";
+            case 3: return "YAR";
+            default: return "";
+        }
     }
 }

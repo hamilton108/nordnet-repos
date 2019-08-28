@@ -1,6 +1,7 @@
 package nordnet.repos;
 
 import com.gargoylesoftware.htmlunit.Page;
+import critterrepos.beans.StockPriceBean;
 import nordnet.downloader.TickerInfo;
 import nordnet.html.DerivativesEnum;
 import oahu.dto.Tuple;
@@ -50,12 +51,21 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     @Override
     public Optional<StockPrice> stockPrice(String ticker) {
-        return Optional.empty();
+        try {
+            TickerInfo tickerInfo = new TickerInfo(ticker);
+            Document doc = getDocument(tickerInfo);
+            Stock stock = stockMarketRepos.findStock(ticker);
+            return createStockPrice(doc, stock);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
     }
 
     @Override
     public Optional<StockPrice> stockPrice(int oid) {
-        return Optional.empty();
+        String ticker = stockMarketRepos.getTickerFor(oid);
+        return stockPrice(ticker);
     }
 
     @Override
@@ -181,7 +191,16 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
         double lo = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_Lo));
 
-        return Optional.empty();
+        double open = openingPrices.get(stock.getTicker());
+
+        StockPriceBean result = new StockPriceBean();
+        result.setOpn(open);
+        result.setHi(hi);
+        result.setLo(lo);
+        result.setCls(close);
+        result.setStock(stock);
+        result.setVolume(1000);
+        return Optional.of(result);
     }
 
     private Elements stockPriceTds(Document doc)  {
