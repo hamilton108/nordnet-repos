@@ -80,17 +80,36 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     @Override
     public Collection<DerivativePrice> calls(String ticker) {
-        return null;
+        try {
+            Document doc = getDocument(new TickerInfo(ticker));
+            return createDerivatives(doc);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
     @Override
     public Collection<DerivativePrice> calls(int oid) {
-        return null;
+        String ticker = stockMarketRepos.getTickerFor(oid);
+        return calls(ticker);
+    }
+
+    @Override
+    public Collection<Derivative> callPutDefs(int oid) {
+        String ticker = stockMarketRepos.getTickerFor(oid);
+        return callPutDefs(ticker);
     }
 
     @Override
     public Collection<Derivative> callPutDefs(String ticker) {
-        return null;
+        try {
+            Document doc = getDocument(new TickerInfo(ticker));
+            return createDefs(doc);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
     @Override
@@ -182,6 +201,22 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     //-----------------------------------------------------------
     //-------------- Package/private methods --------------------
     //-----------------------------------------------------------
+    Collection<Derivative> createDefs(Document doc) {
+        return new ArrayList<>();
+    }
+
+    Collection<DerivativePrice> createDerivatives(Document doc) {
+        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        Element table2 = tables.get(2);
+        Elements rows = table2.getElementsByTag("tr");
+        for (Element row : rows)  {
+            Elements tds = row.getElementsByTag("td");
+            Element ticker = tds.get(CALL_TICKER.getIndex());
+
+        }
+        return new ArrayList<>();
+    }
+
     Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
         Elements tds =  stockPriceTds(doc);
 

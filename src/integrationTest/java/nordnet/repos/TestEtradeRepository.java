@@ -2,6 +2,8 @@ package nordnet.repos;
 
 import nordnet.downloader.DownloaderStub;
 import nordnet.downloader.TickerInfo;
+import oahu.financial.Derivative;
+import oahu.financial.DerivativePrice;
 import oahu.financial.StockPrice;
 import oahu.financial.html.EtradeDownloader;
 import oahu.testing.TestUtil;
@@ -15,6 +17,7 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
@@ -57,7 +60,7 @@ public class TestEtradeRepository {
         Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
         assertThat(tables.size()).isEqualTo(3);
 
-        Element table1 = tables.first();
+        Element table1 = tables.get(TABLE_STOCK_PRICE.getIndex());
         Elements rows = table1.getElementsByTag("tr");
         assertThat(rows.size()).isEqualTo(1);
 
@@ -84,7 +87,7 @@ public class TestEtradeRepository {
         Document doc = getDocument(new TickerInfo("EQNR"), repos);
         Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
 
-        Element table2 = tables.get(2);
+        Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
         Elements rows = table2.getElementsByTag("tr");
         assertThat(rows.size()).isEqualTo(19);
 
@@ -92,7 +95,7 @@ public class TestEtradeRepository {
         Elements tds = row1.getElementsByTag("td");
         assertThat(tds.size()).isEqualTo(16);
 
-        Element tickerBuy = tds.get(TICKER_BUY.getIndex());
+        Element tickerBuy = tds.get(CALL_TICKER.getIndex());
         assertThat(tickerBuy.text()).isEqualTo("EQNR9H30Y162.50");
 
         Element x = tds.get(X.getIndex());
@@ -138,6 +141,20 @@ public class TestEtradeRepository {
         });
     }
 
+    @Test
+    public void testCallPutDefs() {
+        Collection<Derivative> defs = repos.callPutDefs(2);
+        assertThat(defs.size()).isEqualTo(19);
+    }
+
+    @Test
+    @Ignore
+    public void testCalls() {
+        Collection<DerivativePrice> calls = repos.calls(2);
+        assertThat(calls.size()).isEqualTo(19);
+
+    }
+
     private void testOpeningPrices() {
         repos.initOpeningPrices();
         File openingPricesFileName = getOpeningPricesFile();
@@ -145,6 +162,7 @@ public class TestEtradeRepository {
         Map<String,Double> openingPrices = repos.getOpeningPrices();
         assertThat(openingPrices.size()).isEqualTo(3);
     }
+
 
     private File getOpeningPricesFile() {
         return new File(repos.getOpeningPricesFileName());
