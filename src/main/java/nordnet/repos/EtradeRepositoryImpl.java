@@ -1,9 +1,7 @@
 package nordnet.repos;
 
 import com.gargoylesoftware.htmlunit.Page;
-import critterrepos.beans.StockPriceBean;
 import nordnet.downloader.TickerInfo;
-import nordnet.exception.SecurityNotFoundException;
 import nordnet.html.DerivativesEnum;
 import oahu.dto.Tuple;
 import oahu.dto.Tuple2;
@@ -21,18 +19,17 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.print.Doc;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Serializable;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static nordnet.html.DerivativesEnum.*;
-import static nordnet.html.DerivativesStringEnum.*;
+import static nordnet.html.DerivativesStringEnum.TABLE_CLASS;
+import static nordnet.html.DerivativesStringEnum.TD_CLASS;
 
 @Component
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
@@ -140,40 +137,33 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
             return;
         }
         try {
-            FileWriter writer = new FileWriter(getOpeningPricesFileName());
-            PrintWriter printWriter = new PrintWriter(writer);
-            Collection<Stock> stocks = stockMarketRepos.getStocks();
-            for (Stock stock : stocks) {
-                String tik = stock.getTicker();
-                TickerInfo tickerInfo = new TickerInfo(tik);
-                Document doc = getDocument(tickerInfo);
-                Elements tds = stockPriceTds(doc);
-
-                double close = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
-
-                printWriter.println(String.format(Locale.US,"%s:%.2f", tik, close));
-
-                openingPrices.put(tik, close);
-
-                /*
-                String tik = stock.getTicker();
-                TickerInfo tickerInfo = new TickerInfo(tik);
-                Document doc = getDocument(tickerInfo);
-                Optional<StockPrice> stockPrice = createStockPrice(doc, stock);
-                if (!stockPrice.isPresent()) {
-                    throw new SecurityNotFoundException(String.format("Stock price for %s was Optional.empty()", tik));
+            File cachedOpeningPrices = new File(getOpeningPricesFileName());
+            if (cachedOpeningPrices.exists()) {
+                List<String> lines = Files.readAllLines(Paths.get(getOpeningPricesFileName()));
+                for (String line : lines) {
+                    String[] linex = line.split(":");
+                    Double price = Double.parseDouble(linex[1]);
+                    openingPrices.put(linex[0], price);
                 }
-                stockPrice.ifPresent(s -> {
-                    double opn = s.getCls();
-                    printWriter.println(String.format(Locale.US,"%s:%.2f", tik, opn));
-                    StockPriceBean price = new StockPriceBean();
-                    price.setOpn(opn);
-                    price.setStock(stock);
-                    openingPrices.add(price);
-                });
-                 */
             }
-            printWriter.close();
+            else {
+                FileWriter writer = new FileWriter(getOpeningPricesFileName());
+                PrintWriter printWriter = new PrintWriter(writer);
+                Collection<Stock> stocks = stockMarketRepos.getStocks();
+                for (Stock stock : stocks) {
+                    String tik = stock.getTicker();
+                    TickerInfo tickerInfo = new TickerInfo(tik);
+                    Document doc = getDocument(tickerInfo);
+                    Elements tds = stockPriceTds(doc);
+
+                    double close = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
+
+                    printWriter.println(String.format(Locale.US, "%s:%.2f", tik, close));
+
+                    openingPrices.put(tik, close);
+                }
+                printWriter.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
