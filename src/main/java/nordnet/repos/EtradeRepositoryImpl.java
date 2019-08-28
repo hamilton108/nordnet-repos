@@ -41,7 +41,10 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     private String storePath;
 
-    private List<StockPrice> openingPrices = new ArrayList<>();
+    private String openingPricesFileName;
+
+    //private List<StockPrice> openingPrices = new ArrayList<>();
+    private Map<String,Double> openingPrices = new HashMap<>();
 
     @Override
     public Optional<DerivativePrice> findDerivativePrice(Tuple<String> optionInfo) {
@@ -114,15 +117,20 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         return storePath;
     }
     public String getOpeningPricesFileName() {
-        return String.format("%s/openingPrices.txt",storePath);
+        return String.format("%s/%s",storePath,openingPricesFileName);
+    }
+    public void setOpeningPricesFileName(String openingPricesFileName) {
+        this.openingPricesFileName = openingPricesFileName;
     }
 
-    public List<StockPrice> getOpeningPrices() {
+    public Map<String,Double> getOpeningPrices() {
         return openingPrices;
     }
+    /*
     public void setOpeningPrices(List<StockPrice> openingPrices) {
         this.openingPrices = openingPrices;
     }
+     */
 
     //-----------------------------------------------------------
     //-------------- Public methods --------------------
@@ -137,14 +145,15 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
             Collection<Stock> stocks = stockMarketRepos.getStocks();
             for (Stock stock : stocks) {
                 String tik = stock.getTicker();
-                if (!tik.equals("NHY")) {
-                    continue;
-                }
                 TickerInfo tickerInfo = new TickerInfo(tik);
                 Document doc = getDocument(tickerInfo);
                 Elements tds = stockPriceTds(doc);
 
                 double close = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
+
+                printWriter.println(String.format(Locale.US,"%s:%.2f", tik, close));
+
+                openingPrices.put(tik, close);
 
                 /*
                 String tik = stock.getTicker();
@@ -220,4 +229,5 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM-yyyy");
     private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
 }
