@@ -1,8 +1,8 @@
 package nordnet.repos;
 
 import com.gargoylesoftware.htmlunit.Page;
-import critterrepos.beans.StockPriceBean;
 import nordnet.downloader.TickerInfo;
+import nordnet.html.DerivativesEnum;
 import oahu.dto.Tuple;
 import oahu.dto.Tuple2;
 import oahu.financial.Derivative;
@@ -16,20 +16,32 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
+
+import static nordnet.html.DerivativesEnum.*;
+import static nordnet.html.DerivativesStringEnum.TABLE_CLASS;
+import static nordnet.html.DerivativesStringEnum.TD_CLASS;
 
 @Component
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private EtradeDownloader<Page, TickerInfo, Serializable> downloader;
     private StockMarketRepository stockMarketRepos;
+
+    private String storePath;
+
+    private String openingPricesFileName;
+
+    //private List<StockPrice> openingPrices = new ArrayList<>();
+    private Map<String,Double> openingPrices = new HashMap<>();
 
     @Override
     public Optional<DerivativePrice> findDerivativePrice(Tuple<String> optionInfo) {
@@ -81,57 +93,115 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     }
 
+    //-----------------------------------------------------------
+    //--------------------- Properties --------------------------
+    //-----------------------------------------------------------
+    @Autowired
     public void setDownloader(EtradeDownloader downloader) {
         this.downloader = downloader;
     }
 
-    //-----------------------------------------------------------
-    //--------------------- Properties --------------------------
-    //-----------------------------------------------------------
+    @Autowired
     public void setStockMarketRepository(StockMarketRepository stockMarketRepos) {
         this.stockMarketRepos = stockMarketRepos;
+    }
+
+    public void setStorePath(String storePath) {
+        this.storePath = storePath;
+    }
+
+    public String getStorePath() {
+        return storePath;
+    }
+    public String getOpeningPricesFileName() {
+        return String.format("%s/%s",storePath,openingPricesFileName);
+    }
+    public void setOpeningPricesFileName(String openingPricesFileName) {
+        this.openingPricesFileName = openingPricesFileName;
+    }
+
+    public Map<String,Double> getOpeningPrices() {
+        return openingPrices;
+    }
+    /*
+    public void setOpeningPrices(List<StockPrice> openingPrices) {
+        this.openingPrices = openingPrices;
+    }
+     */
+
+    //-----------------------------------------------------------
+    //-------------- Public methods --------------------
+    //-----------------------------------------------------------
+    public void initOpeningPrices() {
+        if (openingPrices.size() > 0) {
+            return;
+        }
+        try {
+            File cachedOpeningPrices = new File(getOpeningPricesFileName());
+            if (cachedOpeningPrices.exists()) {
+                List<String> lines = Files.readAllLines(Paths.get(getOpeningPricesFileName()));
+                for (String line : lines) {
+                    String[] linex = line.split(":");
+                    Double price = Double.parseDouble(linex[1]);
+                    openingPrices.put(linex[0], price);
+                }
+            }
+            else {
+                FileWriter writer = new FileWriter(getOpeningPricesFileName());
+                PrintWriter printWriter = new PrintWriter(writer);
+                Collection<Stock> stocks = stockMarketRepos.getStocks();
+                for (Stock stock : stocks) {
+                    String tik = stock.getTicker();
+                    TickerInfo tickerInfo = new TickerInfo(tik);
+                    Document doc = getDocument(tickerInfo);
+                    Elements tds = stockPriceTds(doc);
+
+                    double close = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
+
+                    printWriter.println(String.format(Locale.US, "%s:%.2f", tik, close));
+
+                    openingPrices.put(tik, close);
+                }
+                printWriter.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     //-----------------------------------------------------------
     //-------------- Package/private methods --------------------
     //-----------------------------------------------------------
     Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
-        return Optional.empty();
-        /*
-        Element top = doc.getElementById("updatetable1");
-        if (top == null) {
-            return Optional.empty();
-        }
-        Element closeEl = top.getElementById("ju.l");
-        Elements openEl = top.getElementsByAttributeValue("name","ju.op");
-        Elements hiEl = top.getElementsByAttributeValue("name","ju.h");
-        Elements loEl = top.getElementsByAttributeValue("name","ju.lo");
-        Elements volEl = top.getElementsByAttributeValue("name","ju.vo");
-        Element timeEl = doc.getElementById("toptime");
-        if ((closeEl == null)
-                || openEl.isEmpty()
-                || hiEl.isEmpty()
-                || loEl.isEmpty()
-                || volEl.isEmpty()
-                || timeEl == null) {
-            return Optional.empty();
-        }
-        try {
-            double close = Double.parseDouble(closeEl.text());
-            double open = Double.parseDouble(openEl.text());
-            double hi = Double.parseDouble(hiEl.text());
-            double lo = Double.parseDouble(loEl.text());
-            long vol = Long.parseLong(volEl.text().replaceAll("\\s",""));
-            Tuple2<LocalDate, LocalTime> timeInfo = getTimeInfo(timeEl);
-            StockPriceBean result = new StockPriceBean(timeInfo.first(), timeInfo.second(), open, hi, lo, close, vol);
-            result.setStock(stock);
-            return Optional.of(result);
-        }
-        catch (NumberFormatException ex) {
-            return Optional.empty();
-        }
+        Elements tds =  stockPriceTds(doc);
 
-         */
+        double close = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
+
+        double hi = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_Hi));
+
+        double lo = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_Lo));
+
+        return Optional.empty();
+    }
+
+    private Elements stockPriceTds(Document doc)  {
+        //Elements tables = doc.getElementsByClass("c01408");
+        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+
+        Element table1 = tables.first();
+        Elements rows = table1.getElementsByTag("tr");
+
+        Element row1 = rows.first();
+        return row1.getElementsByTag("td");
+    }
+
+    private double elementTextToDouble(Element el) {
+        return Double.parseDouble(el.text());
+    }
+    private Element stockPriceElement(Elements tds, DerivativesEnum rowIndex) {
+        Element row = tds.get(rowIndex.getIndex());
+        //return row.getElementsByClass("c01438").first();
+        return row.getElementsByClass(TD_CLASS.getText()).first();
     }
 
     Document getDocument(TickerInfo tickerInfo) throws IOException {
@@ -149,4 +219,5 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM-yyyy");
     private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
 }
