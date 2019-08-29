@@ -63,9 +63,9 @@ public class TestEtradeRepository {
     };
 
     @Test
-    public void testC01408Table1() {
+    @Ignore
+    public void testTable1() {
         Document doc = getDocument(new TickerInfo("EQNR"), repos);
-        //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
         Elements tables = doc.getElementsByTag("tbody");
         assertThat(tables.size()).isEqualTo(3);
 
@@ -94,23 +94,24 @@ public class TestEtradeRepository {
 
     @Test
     @Ignore
-    public void testC01408Table2() {
+    public void testTable3() {
         Document doc = getDocument(new TickerInfo("EQNR"), repos);
-        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        Elements tables = doc.getElementsByTag("tbody");
 
-        Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
-        Elements rows = table2.getElementsByTag("tr");
-        assertThat(rows.size()).isEqualTo(19);
+        Element table = tables.get(TABLE_DERIVATIVES.getIndex());
+        Elements rows = table.getElementsByTag("tr");
+        assertThat(rows.size()).as("Row size").isEqualTo(30);
 
         Element row1 = rows.get(5); // rows.first();
         Elements tds = row1.getElementsByTag("td");
-        assertThat(tds.size()).isEqualTo(16);
+        assertThat(tds.size()).as("Tds size").isEqualTo(16);
 
-        Element tickerBuy = tds.get(CALL_TICKER.getIndex());
-        assertThat(tickerBuy.text()).isEqualTo("EQNR9H30Y162.50");
+        Element callTicker = tds.get(CALL_TICKER.getIndex());
+        assertThat(callTicker.text()).as("Call ticker").isEqualTo("EQNR9L280");
 
         Element x = tds.get(X.getIndex());
-        assertThat(x.text()).isEqualTo("162.5 162,50");
+        assertThat(x.text()).as("X").isEqualTo("280 280,00");
     }
 
     @Test
