@@ -2,8 +2,10 @@ package nordnet.repos;
 
 import com.gargoylesoftware.htmlunit.Page;
 import critterrepos.beans.StockPriceBean;
+import critterrepos.beans.options.DerivativeBean;
 import nordnet.downloader.TickerInfo;
 import nordnet.html.DerivativesEnum;
+import nordnet.html.Util;
 import oahu.dto.Tuple;
 import oahu.dto.Tuple2;
 import oahu.financial.Derivative;
@@ -202,7 +204,25 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     //-------------- Package/private methods --------------------
     //-----------------------------------------------------------
     Collection<Derivative> createDefs(Document doc) {
-        return new ArrayList<>();
+        Collection<Derivative> result = new ArrayList<>();
+        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        Element table2 = tables.get(2);
+        Elements rows = table2.getElementsByTag("tr");
+        for (Element row : rows)  {
+            Elements tds = row.getElementsByTag("td");
+            DerivativeBean d = new DerivativeBean();
+            d.setLifeCycle(Derivative.LifeCycle.FROM_HTML);
+
+            Element ticker = tds.get(CALL_TICKER.getIndex());
+            d.setTicker(ticker.text());
+
+            Element td_X = tds.get(X.getIndex());
+            double x = Util.parseExercisePrice(td_X.text());
+            d.setX(x);
+
+            result.add(d);
+        }
+        return result;
     }
 
     Collection<DerivativePrice> createDerivatives(Document doc) {

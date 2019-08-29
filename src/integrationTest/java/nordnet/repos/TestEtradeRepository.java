@@ -2,6 +2,7 @@ package nordnet.repos;
 
 import nordnet.downloader.DownloaderStub;
 import nordnet.downloader.TickerInfo;
+import nordnet.html.Util;
 import oahu.financial.Derivative;
 import oahu.financial.DerivativePrice;
 import oahu.financial.StockPrice;
@@ -28,8 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
     private EtradeDownloader downloader = new DownloaderStub(storePath);
@@ -54,7 +55,6 @@ public class TestEtradeRepository {
     }
 
     @Test
-    @Ignore
     public void testC01408Table1() {
         Document doc = getDocument(new TickerInfo("EQNR"), repos);
         Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
@@ -145,6 +145,23 @@ public class TestEtradeRepository {
     public void testCallPutDefs() {
         Collection<Derivative> defs = repos.callPutDefs(2);
         assertThat(defs.size()).isEqualTo(19);
+
+        String ticker = "EQNR9H30Y175";
+        Optional<Derivative> def = defs.stream().filter(x -> x.getTicker().equals(ticker)).findAny();
+        assertThat(def).isNotEmpty();
+        def.ifPresent(s -> {
+            assertThat(s.getX()).isEqualTo(175.00);
+        });
+    }
+
+
+    @Test
+    public void testParse_X_price() {
+        double x = Util.parseExercisePrice("175 175,00");
+        assertThat(x).isEqualTo(175.00);
+
+        double x2 = Util.parseExercisePrice("175   175,00");
+        assertThat(x2).isEqualTo(175.00);
     }
 
     @Test
