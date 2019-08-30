@@ -30,6 +30,7 @@ import static nordnet.html.DerivativesEnum.*;
 import static nordnet.html.DerivativesStringEnum.TABLE_CLASS;
 import static nordnet.html.DerivativesStringEnum.TD_CLASS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.in;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
@@ -62,6 +63,84 @@ public class TestEtradeRepository {
         assertThat(el.text()).as(String.format("%s: %s",msg,val)).isEqualTo(val);
     };
 
+
+    @Test
+    public void testOpeningPrices_no_file() {
+        repos.setOpeningPricesFileName("openingPrices.txt");
+        File openingPricesFileName = getOpeningPricesFile();
+        boolean deleteResult = openingPricesFileName.delete();
+        testOpeningPrices();
+    }
+
+    @Test
+    public void testOpeningPrices_initialized() {
+        repos.setOpeningPricesFileName("openingPrices_initialized.txt");
+        testOpeningPrices();
+
+        Map<String,Double> openingPrices = repos.getOpeningPrices();
+
+        double nhy = openingPrices.get("NHY");
+        assertThat(nhy).as("NHY").isEqualTo(28.00);
+
+        double eqnr = openingPrices.get("EQNR");
+        assertThat(eqnr).as("EQNR").isEqualTo(152.00);
+
+        double yar = openingPrices.get("YAR");
+        assertThat(yar).as("YAR").isEqualTo(373.40);
+    }
+
+    @Test
+    public void testCreateStockPrice_oid() {
+        repos.setOpeningPricesFileName("openingPrices_initialized.txt");
+        repos.initOpeningPrices();
+        Optional<StockPrice> price = repos.stockPrice(2);
+        assertThat(price).isNotEmpty();
+        price.ifPresent(s -> {
+            assertThat(s.getOpn()).as("getOpn").isEqualTo(152.00);
+            assertThat(s.getHi()).as("getHi").isEqualTo(154.60);
+            assertThat(s.getLo()).as("getLo").isEqualTo(151.95);
+            assertThat(s.getCls()).as("getCls").isEqualTo(153.90);
+        });
+    }
+
+    @Test
+    public void testCallPutDefs() {
+        Collection<Derivative> defs = repos.callPutDefs(2);
+        assertThat(defs.size()).as("defs.size").isEqualTo(30);
+
+        String ticker = "EQNR9L160";
+        Optional<Derivative> def = defs.stream().filter(x -> x.getTicker().equals(ticker)).findAny();
+        assertThat(def).isNotEmpty();
+        def.ifPresent(s -> {
+            assertThat(s.getX()).as(String.format("%s.getX",ticker)).isEqualTo(160.00);
+        });
+    }
+
+
+    @Test
+    public void testParse_X_price() {
+        double x = Util.parseExercisePrice("175 175,00");
+        assertThat(x).isEqualTo(175.00);
+
+        double x2 = Util.parseExercisePrice("175   175,00");
+        assertThat(x2).isEqualTo(175.00);
+    }
+
+    @Test
+    public void testCalls() {
+        Collection<DerivativePrice> calls = repos.calls(2);
+        assertThat(calls.size()).isEqualTo(30);
+
+    }
+
+    private void testOpeningPrices() {
+        repos.initOpeningPrices();
+        File openingPricesFileName = getOpeningPricesFile();
+        assertThat(openingPricesFileName.exists()).isEqualTo(true);
+        Map<String,Double> openingPrices = repos.getOpeningPrices();
+        assertThat(openingPrices.size()).isEqualTo(3);
+    }
+
     @Test
     @Ignore
     public void testTable1() {
@@ -76,7 +155,6 @@ public class TestEtradeRepository {
         Element row1 = rows.first();
         Elements tds = row1.getElementsByTag("td");
         assertThat(tds.size()).isEqualTo(22);
-
 
         Element rowClose = tds.get(STOCK_PRICE_CLOSE.getIndex());
         Element tdClose = Util.getTd(rowClose);
@@ -115,83 +193,15 @@ public class TestEtradeRepository {
     }
 
     @Test
-    public void testOpeningPrices_no_file() {
-        repos.setOpeningPricesFileName("openingPrices.txt");
-        File openingPricesFileName = getOpeningPricesFile();
-        boolean deleteResult = openingPricesFileName.delete();
-        testOpeningPrices();
-    }
-
-    @Test
-    public void testOpeningPrices_initialized() {
-        repos.setOpeningPricesFileName("openingPrices_initialized.txt");
-        testOpeningPrices();
-
-        Map<String,Double> openingPrices = repos.getOpeningPrices();
-
-        double nhy = openingPrices.get("NHY");
-        assertThat(nhy).as("NHY").isEqualTo(28.00);
-
-        double eqnr = openingPrices.get("EQNR");
-        assertThat(eqnr).as("EQNR").isEqualTo(150.00);
-
-        double yar = openingPrices.get("YAR");
-        assertThat(yar).as("YAR").isEqualTo(373.40);
-    }
-
-    @Test
-    public void testCreateStockPrice_oid() {
-        repos.setOpeningPricesFileName("openingPrices_initialized.txt");
-        repos.initOpeningPrices();
-        Optional<StockPrice> price = repos.stockPrice(2);
-        assertThat(price).isNotEmpty();
-        price.ifPresent(s -> {
-            assertThat(s.getOpn()).as("getOpn").isEqualTo(150.00);
-            assertThat(s.getHi()).as("getHi").isEqualTo(150.85);
-            assertThat(s.getLo()).as("getLo").isEqualTo(149.10);
-            assertThat(s.getCls()).as("getCls").isEqualTo(149.90);
-        });
-    }
-
-    @Test
-    public void testCallPutDefs() {
-        Collection<Derivative> defs = repos.callPutDefs(2);
-        assertThat(defs.size()).isEqualTo(19);
-
-        String ticker = "EQNR9H30Y175";
-        Optional<Derivative> def = defs.stream().filter(x -> x.getTicker().equals(ticker)).findAny();
-        assertThat(def).isNotEmpty();
-        def.ifPresent(s -> {
-            assertThat(s.getX()).isEqualTo(175.00);
-        });
-    }
-
-
-    @Test
-    public void testParse_X_price() {
-        double x = Util.parseExercisePrice("175 175,00");
-        assertThat(x).isEqualTo(175.00);
-
-        double x2 = Util.parseExercisePrice("175   175,00");
-        assertThat(x2).isEqualTo(175.00);
-    }
-
-    @Test
     @Ignore
-    public void testCalls() {
-        Collection<DerivativePrice> calls = repos.calls(2);
-        assertThat(calls.size()).isEqualTo(19);
+    public void testHtmlDate() {
+        Document doc = getDocument(new TickerInfo("EQNR"), repos);
+        Elements inputSelectValues = doc.getElementsByClass("input__value-label");
+        assertThat(inputSelectValues.size()).as("input__value-label").isEqualTo(3);
 
+        Element dateEl = inputSelectValues.get(SELECT_INPUT_DATE.getIndex());
+        assertThat(dateEl.text()).as("date input").isEqualTo("20.12.2019");
     }
-
-    private void testOpeningPrices() {
-        repos.initOpeningPrices();
-        File openingPricesFileName = getOpeningPricesFile();
-        assertThat(openingPricesFileName.exists()).isEqualTo(true);
-        Map<String,Double> openingPrices = repos.getOpeningPrices();
-        assertThat(openingPrices.size()).isEqualTo(3);
-    }
-
 
     private File getOpeningPricesFile() {
         return new File(repos.getOpeningPricesFileName());

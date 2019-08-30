@@ -3,6 +3,7 @@ package nordnet.repos;
 import com.gargoylesoftware.htmlunit.Page;
 import critterrepos.beans.StockPriceBean;
 import critterrepos.beans.options.DerivativeBean;
+import critterrepos.beans.options.DerivativePriceBean;
 import nordnet.downloader.TickerInfo;
 import nordnet.html.DerivativesEnum;
 import nordnet.html.Util;
@@ -206,13 +207,15 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     //-----------------------------------------------------------
     Collection<Derivative> createDefs(Document doc) {
         Collection<Derivative> result = new ArrayList<>();
-        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
-        Element table2 = tables.get(2);
+        //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        Elements tables = doc.getElementsByTag("tbody");
+        Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
         Elements rows = table2.getElementsByTag("tr");
         for (Element row : rows)  {
             Elements tds = row.getElementsByTag("td");
             DerivativeBean d = new DerivativeBean();
             d.setLifeCycle(Derivative.LifeCycle.FROM_HTML);
+            d.setOpType(Derivative.OptionType.CALL);
 
             Element ticker = tds.get(CALL_TICKER.getIndex());
             d.setTicker(ticker.text());
@@ -227,15 +230,18 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
 
     Collection<DerivativePrice> createDerivatives(Document doc) {
-        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
-        Element table2 = tables.get(2);
+        Collection<DerivativePrice> result = new ArrayList<>();
+        //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        Elements tables = doc.getElementsByTag("tbody");
+        Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
         Elements rows = table2.getElementsByTag("tr");
         for (Element row : rows)  {
             Elements tds = row.getElementsByTag("td");
             Element ticker = tds.get(CALL_TICKER.getIndex());
-
+            DerivativePriceBean price = new DerivativePriceBean();
+            result.add(price);
         }
-        return new ArrayList<>();
+        return result;
     }
 
     Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
@@ -261,10 +267,12 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     private Elements stockPriceTds(Document doc)  {
         //Elements tables = doc.getElementsByClass("c01408");
-        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        Elements tables = doc.getElementsByTag("tbody");
 
-        Element table1 = tables.first();
-        Elements rows = table1.getElementsByTag("tr");
+        //Element table1 = tables.first();
+        Element table = tables.get(TABLE_STOCK_PRICE.getIndex());
+        Elements rows = table.getElementsByTag("tr");
 
         Element row1 = rows.first();
         return row1.getElementsByTag("td");
@@ -276,7 +284,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private Element stockPriceElement(Elements tds, DerivativesEnum rowIndex) {
         Element row = tds.get(rowIndex.getIndex());
         //return row.getElementsByClass("c01438").first();
-        return row.getElementsByClass(TD_CLASS.getText()).first();
+        //return row.getElementsByClass(TD_CLASS.getText()).first();
+        return Util.getTd(row);
     }
 
     Document getDocument(TickerInfo tickerInfo) throws IOException {
