@@ -30,11 +30,12 @@ import static nordnet.html.DerivativesEnum.*;
 import static nordnet.html.DerivativesStringEnum.TABLE_CLASS;
 import static nordnet.html.DerivativesStringEnum.TD_CLASS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.in;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
     private EtradeDownloader downloader = new DownloaderStub(storePath);
@@ -63,7 +64,7 @@ public class TestEtradeRepository {
     };
 
     @Test
-    @Ignore
+    //@Ignore
     public void testTable1() {
         Document doc = getDocument(new TickerInfo("EQNR"), repos);
         Elements tables = doc.getElementsByTag("tbody");
@@ -93,7 +94,7 @@ public class TestEtradeRepository {
     }
 
     @Test
-    @Ignore
+    //@Ignore
     public void testTable3() {
         Document doc = getDocument(new TickerInfo("EQNR"), repos);
         //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
@@ -112,6 +113,16 @@ public class TestEtradeRepository {
 
         Element x = tds.get(X.getIndex());
         assertThat(x.text()).as("X").isEqualTo("280 280,00");
+    }
+
+    @Test
+    public void testHtmlDate() {
+        Document doc = getDocument(new TickerInfo("EQNR"), repos);
+        Elements inputSelectValues = doc.getElementsByClass("input__value-label");
+        assertThat(inputSelectValues.size()).as("input__value-label").isEqualTo(3);
+
+        Element dateEl = inputSelectValues.get(2);
+        assertThat(dateEl.text()).as("date input").isEqualTo("20.12.2019");
     }
 
     @Test
@@ -146,23 +157,23 @@ public class TestEtradeRepository {
         Optional<StockPrice> price = repos.stockPrice(2);
         assertThat(price).isNotEmpty();
         price.ifPresent(s -> {
-            assertThat(s.getOpn()).as("getOpn").isEqualTo(150.00);
-            assertThat(s.getHi()).as("getHi").isEqualTo(150.85);
-            assertThat(s.getLo()).as("getLo").isEqualTo(149.10);
-            assertThat(s.getCls()).as("getCls").isEqualTo(149.90);
+            assertThat(s.getOpn()).as("getOpn").isEqualTo(152.00);
+            assertThat(s.getHi()).as("getHi").isEqualTo(154.60);
+            assertThat(s.getLo()).as("getLo").isEqualTo(151.95);
+            assertThat(s.getCls()).as("getCls").isEqualTo(153.90);
         });
     }
 
     @Test
     public void testCallPutDefs() {
         Collection<Derivative> defs = repos.callPutDefs(2);
-        assertThat(defs.size()).isEqualTo(19);
+        assertThat(defs.size()).as("defs.size").isEqualTo(30);
 
-        String ticker = "EQNR9H30Y175";
+        String ticker = "EQNR9L160";
         Optional<Derivative> def = defs.stream().filter(x -> x.getTicker().equals(ticker)).findAny();
         assertThat(def).isNotEmpty();
         def.ifPresent(s -> {
-            assertThat(s.getX()).isEqualTo(175.00);
+            assertThat(s.getX()).as(String.format("%s.getX",ticker)).isEqualTo(160.00);
         });
     }
 
