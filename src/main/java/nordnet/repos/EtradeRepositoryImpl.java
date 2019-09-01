@@ -19,7 +19,6 @@ import oahu.financial.repository.StockMarketRepository;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -33,8 +32,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static nordnet.html.DerivativesEnum.*;
-import static nordnet.html.DerivativesStringEnum.TABLE_CLASS;
-import static nordnet.html.DerivativesStringEnum.TD_CLASS;
 
 @Component
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {

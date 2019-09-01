@@ -34,8 +34,8 @@ import static org.assertj.core.api.Assertions.in;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
     private EtradeDownloader downloader = new DownloaderStub(storePath);
@@ -62,7 +62,6 @@ public class TestEtradeRepository {
     private Procedure3<Element,String,String> myAssert = (el, val, msg) -> {
         assertThat(el.text()).as(String.format("%s: %s",msg,val)).isEqualTo(val);
     };
-
 
     @Test
     public void testOpeningPrices_no_file() {
