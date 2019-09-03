@@ -16,7 +16,6 @@ import oahu.financial.StockPrice;
 import oahu.financial.html.EtradeDownloader;
 import oahu.financial.repository.EtradeRepository;
 import oahu.financial.repository.StockMarketRepository;
-import org.graalvm.compiler.nodes.calc.IntegerDivRemNode;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,6 +23,7 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.print.DocFlavor;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static nordnet.html.DerivativesEnum.*;
+import static nordnet.html.DerivativesStringEnum.INPUT_LABEL_CLASS;
 
 @Component
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
@@ -85,7 +86,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     public Collection<DerivativePrice> calls(String ticker) {
         try {
             Document doc = getDocument(new TickerInfo(ticker));
-            return createDerivatives(doc).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.CALL).collect(Collectors.toList());
+            Stock stock = stockMarketRepos.findStock(ticker);
+            return createDerivatives(doc,stock).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.CALL).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
             return new ArrayList<>();
@@ -228,33 +230,69 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         return result;
     }
 
-    Collection<DerivativePrice> createDerivatives(Document doc) {
+    Collection<DerivativePrice> createDerivatives(Document doc, Stock stock) {
         Collection<DerivativePrice> result = new ArrayList<>();
         //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
         Elements tables = doc.getElementsByTag("tbody");
         Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
         Elements rows = table2.getElementsByTag("tr");
-        for (Element row : rows)  {
+        for (Element row : rows) {
             Elements tds = row.getElementsByTag("td");
             DerivativePriceBean price = new DerivativePriceBean();
             Optional<Derivative> derivative = fetchOrCreateDerivative(tds, Derivative.OptionType.CALL);
             derivative.ifPresent(dx -> {
+                ((DerivativeBean)dx).setStock(stock);
                 price.setDerivative(dx);
                 result.add(price);
             });
         }
         return result;
     }
+
     Optional<Derivative> fetchOrCreateDerivative(Elements tds, Derivative.OptionType optionType) {
         DerivativesEnum du = optionType == Derivative.OptionType.CALL ? CALL_TICKER : PUT_TICKER;
         Element ticker = tds.get(du.getIndex());
         Optional<Derivative> found = stockMarketRepos.findDerivative(ticker.text());
 
         if (!found.isPresent()) {
+            DerivativeBean derivative2 = new DerivativeBean();
+            derivative2.setTicker(ticker.text());
+            derivative2.setLifeCycle(Derivative.LifeCycle.FROM_HTML);
+            derivative2.setOpType(optionType);
+            Element xe = tds.get(X.getIndex());
+            double x = Util.parseExercisePrice(xe.text());
+            derivative2.setX(x);
+            found = Optional.of(derivative2);
 
+            /*
+            double x = Double.parseDouble(el.child(2).text());
+            String child3txt = el.child(3).text();
+            LocalDate exp = LocalDate.parse(child3txt, dateFormatter);
+
+            derivative2.setTicker(optionName);
+            derivative2.setX(x);
+            derivative2.setExpiry(exp);
+            derivative2.setStock(stock);
+
+             */
         }
 
-        return Optional.empty();
+        return found;
+    }
+
+    Optional<LocalDate> htmlDate(Document doc) {
+        Elements inputSelectValues = doc.getElementsByClass(INPUT_LABEL_CLASS.getText());
+        //assertThat(inputSelectValues.size()).as("input__value-label").isEqualTo(3);
+
+        Element dateEl = inputSelectValues.get(SELECT_INPUT_DATE.getIndex());
+
+        String[] split = dateEl.text().split("\\.");
+
+        int year = Integer.parseInt(split[2]);
+        int month = Integer.parseInt(split[1]);
+        int day = Integer.parseInt(split[0]);
+        //assertThat(dateEl.text()).as("date input").isEqualTo("20.12.2019");
+        return Optional.of(LocalDate.of(year,month,day));
     }
 
     Optional<StockPrice> createStockPrice(Document doc, Stock stock) {

@@ -7,12 +7,10 @@ import oahu.financial.Derivative;
 import oahu.financial.DerivativePrice;
 import oahu.financial.StockPrice;
 import oahu.financial.html.EtradeDownloader;
-import oahu.functional.Procedure2;
 import oahu.functional.Procedure3;
 import oahu.testing.TestUtil;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -21,21 +19,18 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static nordnet.html.DerivativesEnum.*;
-import static nordnet.html.DerivativesStringEnum.TABLE_CLASS;
-import static nordnet.html.DerivativesStringEnum.TD_CLASS;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
     private EtradeDownloader downloader = new DownloaderStub(storePath);
@@ -192,14 +187,22 @@ public class TestEtradeRepository {
     }
 
     @Test
-    @Ignore
+    //@Ignore
     public void testHtmlDate() {
         Document doc = getDocument(new TickerInfo("EQNR"), repos);
+        /*
         Elements inputSelectValues = doc.getElementsByClass("input__value-label");
         assertThat(inputSelectValues.size()).as("input__value-label").isEqualTo(3);
 
         Element dateEl = inputSelectValues.get(SELECT_INPUT_DATE.getIndex());
         assertThat(dateEl.text()).as("date input").isEqualTo("20.12.2019");
+
+         */
+        Optional<LocalDate> localDate = repos.htmlDate(doc);
+        assertThat(localDate).isNotEmpty();
+        localDate.ifPresent(d -> {
+            assertThat(d).isEqualTo(LocalDate.of(2019,12,20));
+        });
     }
 
     private File getOpeningPricesFile() {
