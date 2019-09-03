@@ -16,6 +16,7 @@ import oahu.financial.StockPrice;
 import oahu.financial.html.EtradeDownloader;
 import oahu.financial.repository.EtradeRepository;
 import oahu.financial.repository.StockMarketRepository;
+import org.graalvm.compiler.nodes.calc.IntegerDivRemNode;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -30,6 +31,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static nordnet.html.DerivativesEnum.*;
 
@@ -83,7 +85,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     public Collection<DerivativePrice> calls(String ticker) {
         try {
             Document doc = getDocument(new TickerInfo(ticker));
-            return createDerivatives(doc);
+            return createDerivatives(doc).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.CALL).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
             return new ArrayList<>();
@@ -234,11 +236,25 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         Elements rows = table2.getElementsByTag("tr");
         for (Element row : rows)  {
             Elements tds = row.getElementsByTag("td");
-            Element ticker = tds.get(CALL_TICKER.getIndex());
             DerivativePriceBean price = new DerivativePriceBean();
-            result.add(price);
+            Optional<Derivative> derivative = fetchOrCreateDerivative(tds, Derivative.OptionType.CALL);
+            derivative.ifPresent(dx -> {
+                price.setDerivative(dx);
+                result.add(price);
+            });
         }
         return result;
+    }
+    Optional<Derivative> fetchOrCreateDerivative(Elements tds, Derivative.OptionType optionType) {
+        DerivativesEnum du = optionType == Derivative.OptionType.CALL ? CALL_TICKER : PUT_TICKER;
+        Element ticker = tds.get(du.getIndex());
+        Optional<Derivative> found = stockMarketRepos.findDerivative(ticker.text());
+
+        if (!found.isPresent()) {
+
+        }
+
+        return Optional.empty();
     }
 
     Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
