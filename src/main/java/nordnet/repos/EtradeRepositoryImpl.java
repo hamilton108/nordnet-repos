@@ -2,8 +2,12 @@ package nordnet.repos;
 
 import com.gargoylesoftware.htmlunit.Page;
 import critterrepos.beans.StockPriceBean;
+import critterrepos.beans.options.DerivativeBean;
+import critterrepos.beans.options.DerivativePriceBean;
 import nordnet.downloader.TickerInfo;
+import nordnet.exception.SecurityParseErrorException;
 import nordnet.html.DerivativesEnum;
+import nordnet.html.Util;
 import oahu.dto.Tuple;
 import oahu.dto.Tuple2;
 import oahu.financial.Derivative;
@@ -20,6 +24,7 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.print.DocFlavor;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -27,10 +32,10 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static nordnet.html.DerivativesEnum.*;
-import static nordnet.html.DerivativesStringEnum.TABLE_CLASS;
-import static nordnet.html.DerivativesStringEnum.TD_CLASS;
+import static nordnet.html.DerivativesStringEnum.INPUT_LABEL_CLASS;
 
 @Component
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
@@ -70,19 +75,28 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     @Override
     public Collection<DerivativePrice> puts(String ticker) {
-        return null;
+        try {
+            Document doc = getDocument(new TickerInfo(ticker));
+            Stock stock = stockMarketRepos.findStock(ticker);
+            return createDerivatives(doc,stock).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.PUT).collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
     @Override
     public Collection<DerivativePrice> puts(int oid) {
-        return null;
+        String ticker = stockMarketRepos.getTickerFor(oid);
+        return puts(ticker);
     }
 
     @Override
     public Collection<DerivativePrice> calls(String ticker) {
         try {
             Document doc = getDocument(new TickerInfo(ticker));
-            return createDerivatives(doc);
+            Stock stock = stockMarketRepos.findStock(ticker);
+            return createDerivatives(doc,stock).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.CALL).collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
             return new ArrayList<>();
@@ -201,20 +215,131 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     //-----------------------------------------------------------
     //-------------- Package/private methods --------------------
     //-----------------------------------------------------------
-    Collection<Derivative> createDefs(Document doc) {
-        return new ArrayList<>();
-    }
-
-    Collection<DerivativePrice> createDerivatives(Document doc) {
-        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
-        Element table2 = tables.get(2);
+    private Collection<Derivative> createDefs(Document doc) {
+        Collection<Derivative> result = new ArrayList<>();
+        //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        Elements tables = doc.getElementsByTag("tbody");
+        Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
         Elements rows = table2.getElementsByTag("tr");
         for (Element row : rows)  {
             Elements tds = row.getElementsByTag("td");
+            DerivativeBean d = new DerivativeBean();
+            d.setLifeCycle(Derivative.LifeCycle.FROM_HTML);
+            d.setOpType(Derivative.OptionType.CALL);
+
             Element ticker = tds.get(CALL_TICKER.getIndex());
+            d.setTicker(ticker.text());
+
+            Element td_X = tds.get(X.getIndex());
+            double x = Util.parseExercisePrice(td_X.text());
+            d.setX(x);
+
+            result.add(d);
+        }
+        return result;
+    }
+
+    private Collection<DerivativePrice> createDerivatives(Document doc, Stock stock) {
+        Collection<DerivativePrice> result = new ArrayList<>();
+        //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        Elements tables = doc.getElementsByTag("tbody");
+        Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
+        Elements rows = table2.getElementsByTag("tr");
+        Optional<LocalDate> expiry = htmlDate(doc);
+        if (!expiry.isPresent()) {
+            throw new SecurityParseErrorException("Error parsing expiry date");
+        }
+        for (Element row : rows) {
+            Elements tds = row.getElementsByTag("td");
+
+            //-------------------- CALLS -----------------------
+            DerivativePriceBean callPrice = new DerivativePriceBean();
+            Optional<Derivative> callDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.CALL);
+            callDerivative.ifPresent(cx -> {
+                ((DerivativeBean)cx).setStock(stock);
+                ((DerivativeBean)cx).setExpiry(expiry.get());
+                callPrice.setDerivative(cx);
+
+                Element bid_e = tds.get(CALL_BID.getIndex());
+                double bid = Util.parseExercisePrice(bid_e.text());
+                callPrice.setBuy(bid);
+
+                Element ask_e = tds.get(CALL_ASK.getIndex());
+                double ask = Util.parseExercisePrice(ask_e.text());
+                callPrice.setSell(ask);
+
+                result.add(callPrice);
+            });
+
+            //-------------------- PUTS -----------------------
+            DerivativePriceBean putPrice = new DerivativePriceBean();
+            Optional<Derivative> putDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.PUT);
+            putDerivative.ifPresent(px -> {
+                ((DerivativeBean)px).setStock(stock);
+                ((DerivativeBean)px).setExpiry(expiry.get());
+                putPrice.setDerivative(px);
+
+                Element bid_e = tds.get(PUT_BID.getIndex());
+                double bid = Util.parseExercisePrice(bid_e.text());
+                putPrice.setBuy(bid);
+
+                Element ask_e = tds.get(PUT_ASK.getIndex());
+                double ask = Util.parseExercisePrice(ask_e.text());
+                putPrice.setSell(ask);
+
+                result.add(putPrice);
+            });
 
         }
-        return new ArrayList<>();
+        return result;
+    }
+
+    private Optional<Derivative> fetchOrCreateDerivative(Elements tds, Derivative.OptionType optionType) {
+        DerivativesEnum du = optionType == Derivative.OptionType.CALL ? CALL_TICKER : PUT_TICKER;
+        Element ticker = tds.get(du.getIndex());
+        Optional<Derivative> found = stockMarketRepos.findDerivative(ticker.text());
+
+        if (!found.isPresent()) {
+            DerivativeBean derivative2 = new DerivativeBean();
+
+            derivative2.setTicker(ticker.text());
+            derivative2.setLifeCycle(Derivative.LifeCycle.FROM_HTML);
+            derivative2.setOpType(optionType);
+
+            Element xe = tds.get(X.getIndex());
+            double x = Util.parseExercisePrice(xe.text());
+            derivative2.setX(x);
+
+            found = Optional.of(derivative2);
+
+            /*
+            double x = Double.parseDouble(el.child(2).text());
+            String child3txt = el.child(3).text();
+            LocalDate exp = LocalDate.parse(child3txt, dateFormatter);
+
+            derivative2.setTicker(optionName);
+            derivative2.setX(x);
+            derivative2.setExpiry(exp);
+            derivative2.setStock(stock);
+
+             */
+        }
+        return found;
+    }
+
+    Optional<LocalDate> htmlDate(Document doc) {
+        Elements inputSelectValues = doc.getElementsByClass(INPUT_LABEL_CLASS.getText());
+        //assertThat(inputSelectValues.size()).as("input__value-label").isEqualTo(3);
+
+        Element dateEl = inputSelectValues.get(SELECT_INPUT_DATE.getIndex());
+
+        String[] split = dateEl.text().split("\\.");
+
+        int year = Integer.parseInt(split[2]);
+        int month = Integer.parseInt(split[1]);
+        int day = Integer.parseInt(split[0]);
+        //assertThat(dateEl.text()).as("date input").isEqualTo("20.12.2019");
+        return Optional.of(LocalDate.of(year,month,day));
     }
 
     Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
@@ -240,10 +365,12 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     private Elements stockPriceTds(Document doc)  {
         //Elements tables = doc.getElementsByClass("c01408");
-        Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
+        Elements tables = doc.getElementsByTag("tbody");
 
-        Element table1 = tables.first();
-        Elements rows = table1.getElementsByTag("tr");
+        //Element table1 = tables.first();
+        Element table = tables.get(TABLE_STOCK_PRICE.getIndex());
+        Elements rows = table.getElementsByTag("tr");
 
         Element row1 = rows.first();
         return row1.getElementsByTag("td");
@@ -255,7 +382,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private Element stockPriceElement(Elements tds, DerivativesEnum rowIndex) {
         Element row = tds.get(rowIndex.getIndex());
         //return row.getElementsByClass("c01438").first();
-        return row.getElementsByClass(TD_CLASS.getText()).first();
+        //return row.getElementsByClass(TD_CLASS.getText()).first();
+        return Util.getTd(row);
     }
 
     Document getDocument(TickerInfo tickerInfo) throws IOException {
