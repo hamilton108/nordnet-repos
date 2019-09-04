@@ -5,6 +5,7 @@ import critterrepos.beans.StockPriceBean;
 import critterrepos.beans.options.DerivativeBean;
 import critterrepos.beans.options.DerivativePriceBean;
 import nordnet.downloader.TickerInfo;
+import nordnet.exception.SecurityParseErrorException;
 import nordnet.html.DerivativesEnum;
 import nordnet.html.Util;
 import oahu.dto.Tuple;
@@ -206,7 +207,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     //-----------------------------------------------------------
     //-------------- Package/private methods --------------------
     //-----------------------------------------------------------
-    Collection<Derivative> createDefs(Document doc) {
+    private Collection<Derivative> createDefs(Document doc) {
         Collection<Derivative> result = new ArrayList<>();
         //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
         Elements tables = doc.getElementsByTag("tbody");
@@ -230,18 +231,23 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         return result;
     }
 
-    Collection<DerivativePrice> createDerivatives(Document doc, Stock stock) {
+    private Collection<DerivativePrice> createDerivatives(Document doc, Stock stock) {
         Collection<DerivativePrice> result = new ArrayList<>();
         //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
         Elements tables = doc.getElementsByTag("tbody");
         Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
         Elements rows = table2.getElementsByTag("tr");
+        Optional<LocalDate> expiry = htmlDate(doc);
+        if (!expiry.isPresent()) {
+            throw new SecurityParseErrorException("Error parsing expiry date");
+        }
         for (Element row : rows) {
             Elements tds = row.getElementsByTag("td");
             DerivativePriceBean price = new DerivativePriceBean();
             Optional<Derivative> derivative = fetchOrCreateDerivative(tds, Derivative.OptionType.CALL);
             derivative.ifPresent(dx -> {
                 ((DerivativeBean)dx).setStock(stock);
+                ((DerivativeBean)dx).setExpiry(expiry.get());
                 price.setDerivative(dx);
                 result.add(price);
             });
@@ -249,19 +255,22 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         return result;
     }
 
-    Optional<Derivative> fetchOrCreateDerivative(Elements tds, Derivative.OptionType optionType) {
+    private Optional<Derivative> fetchOrCreateDerivative(Elements tds, Derivative.OptionType optionType) {
         DerivativesEnum du = optionType == Derivative.OptionType.CALL ? CALL_TICKER : PUT_TICKER;
         Element ticker = tds.get(du.getIndex());
         Optional<Derivative> found = stockMarketRepos.findDerivative(ticker.text());
 
         if (!found.isPresent()) {
             DerivativeBean derivative2 = new DerivativeBean();
+
             derivative2.setTicker(ticker.text());
             derivative2.setLifeCycle(Derivative.LifeCycle.FROM_HTML);
             derivative2.setOpType(optionType);
+
             Element xe = tds.get(X.getIndex());
             double x = Util.parseExercisePrice(xe.text());
             derivative2.setX(x);
+
             found = Optional.of(derivative2);
 
             /*

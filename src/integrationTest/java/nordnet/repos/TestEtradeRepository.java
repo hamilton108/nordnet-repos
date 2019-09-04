@@ -25,12 +25,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import static nordnet.html.DerivativesEnum.*;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
     private EtradeDownloader downloader = new DownloaderStub(storePath);
@@ -125,6 +125,19 @@ public class TestEtradeRepository {
         Collection<DerivativePrice> calls = repos.calls(2);
         assertThat(calls.size()).isEqualTo(30);
 
+        String ticker = "EQNR9L155";
+        Optional<DerivativePrice> call = calls.stream().filter(x -> x.getTicker().equals(ticker)).findAny();
+        assertThat(call).isNotEmpty();
+
+        call.ifPresent( c -> {
+            Derivative d = c.getDerivative();
+            assertThat(d).isNotNull();
+            assertThat(d.getOpType()).isEqualTo(Derivative.OptionType.CALL);
+            assertThat(d.getX()).isEqualTo(155);
+            assertThat(d.getExpiry()).isEqualTo(LocalDate.of(2019,12,20));
+            assertThat(d.getLifeCycle()).isEqualTo(Derivative.LifeCycle.FROM_HTML);
+            assertThat(c.getBuy()).isEqualTo(7);
+        });
     }
 
     private void testOpeningPrices() {
@@ -187,7 +200,7 @@ public class TestEtradeRepository {
     }
 
     @Test
-    //@Ignore
+    @Ignore
     public void testHtmlDate() {
         Document doc = getDocument(new TickerInfo("EQNR"), repos);
         /*
