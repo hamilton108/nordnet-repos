@@ -29,8 +29,8 @@ import static org.assertj.core.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    //private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
     private StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
     private EtradeDownloader downloader = new DownloaderStub(storePath);
@@ -136,7 +136,29 @@ public class TestEtradeRepository {
             assertThat(d.getX()).isEqualTo(155);
             assertThat(d.getExpiry()).isEqualTo(LocalDate.of(2019,12,20));
             assertThat(d.getLifeCycle()).isEqualTo(Derivative.LifeCycle.FROM_HTML);
-            assertThat(c.getBuy()).isEqualTo(7);
+            assertThat(c.getBuy()).as("Bid").isEqualTo(7);
+            assertThat(c.getSell()).as("Ask").isEqualTo(8.25);
+        });
+    }
+
+    @Test
+    public void testPuts() {
+        Collection<DerivativePrice> puts = repos.puts(2);
+        assertThat(puts.size()).isEqualTo(30);
+
+        String ticker = "EQNR9X155";
+        Optional<DerivativePrice> put = puts.stream().filter(x -> x.getTicker().equals(ticker)).findAny();
+        assertThat(put).isNotEmpty();
+
+        put.ifPresent( c -> {
+            Derivative d = c.getDerivative();
+            assertThat(d).isNotNull();
+            assertThat(d.getOpType()).isEqualTo(Derivative.OptionType.PUT);
+            assertThat(d.getX()).isEqualTo(155);
+            assertThat(d.getExpiry()).isEqualTo(LocalDate.of(2019,12,20));
+            assertThat(d.getLifeCycle()).isEqualTo(Derivative.LifeCycle.FROM_HTML);
+            assertThat(c.getBuy()).as("Bid").isEqualTo(9.25);
+            assertThat(c.getSell()).as("Ask").isEqualTo(10.5);
         });
     }
 

@@ -11,7 +11,11 @@ public enum DerivativesEnum {
    STOCK_PRICE_Lo(12),
 
    CALL_TICKER(2),
-   PUT_TICKER(3),
+   CALL_BID(4),
+   CALL_ASK(5),
+   PUT_TICKER(12),
+   PUT_BID(9),
+   PUT_ASK(10),
    X(7);
 
    private final int index;

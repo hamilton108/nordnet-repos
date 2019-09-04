@@ -75,12 +75,20 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     @Override
     public Collection<DerivativePrice> puts(String ticker) {
-        return null;
+        try {
+            Document doc = getDocument(new TickerInfo(ticker));
+            Stock stock = stockMarketRepos.findStock(ticker);
+            return createDerivatives(doc,stock).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.PUT).collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
     @Override
     public Collection<DerivativePrice> puts(int oid) {
-        return null;
+        String ticker = stockMarketRepos.getTickerFor(oid);
+        return puts(ticker);
     }
 
     @Override
@@ -243,14 +251,45 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         }
         for (Element row : rows) {
             Elements tds = row.getElementsByTag("td");
-            DerivativePriceBean price = new DerivativePriceBean();
-            Optional<Derivative> derivative = fetchOrCreateDerivative(tds, Derivative.OptionType.CALL);
-            derivative.ifPresent(dx -> {
-                ((DerivativeBean)dx).setStock(stock);
-                ((DerivativeBean)dx).setExpiry(expiry.get());
-                price.setDerivative(dx);
-                result.add(price);
+
+            //-------------------- CALLS -----------------------
+            DerivativePriceBean callPrice = new DerivativePriceBean();
+            Optional<Derivative> callDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.CALL);
+            callDerivative.ifPresent(cx -> {
+                ((DerivativeBean)cx).setStock(stock);
+                ((DerivativeBean)cx).setExpiry(expiry.get());
+                callPrice.setDerivative(cx);
+
+                Element bid_e = tds.get(CALL_BID.getIndex());
+                double bid = Util.parseExercisePrice(bid_e.text());
+                callPrice.setBuy(bid);
+
+                Element ask_e = tds.get(CALL_ASK.getIndex());
+                double ask = Util.parseExercisePrice(ask_e.text());
+                callPrice.setSell(ask);
+
+                result.add(callPrice);
             });
+
+            //-------------------- PUTS -----------------------
+            DerivativePriceBean putPrice = new DerivativePriceBean();
+            Optional<Derivative> putDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.PUT);
+            putDerivative.ifPresent(px -> {
+                ((DerivativeBean)px).setStock(stock);
+                ((DerivativeBean)px).setExpiry(expiry.get());
+                putPrice.setDerivative(px);
+
+                Element bid_e = tds.get(PUT_BID.getIndex());
+                double bid = Util.parseExercisePrice(bid_e.text());
+                putPrice.setBuy(bid);
+
+                Element ask_e = tds.get(PUT_ASK.getIndex());
+                double ask = Util.parseExercisePrice(ask_e.text());
+                putPrice.setSell(ask);
+
+                result.add(putPrice);
+            });
+
         }
         return result;
     }
@@ -285,7 +324,6 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
              */
         }
-
         return found;
     }
 
