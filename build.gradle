@@ -1,6 +1,7 @@
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'java'
+apply plugin: 'idea'
 
 apply from: '../gradlecommon/spring-boot-deps.gradle'
 apply from: '../gradlecommon/integrationTest.gradle'
@@ -11,8 +12,8 @@ group = 'hamilton108'
 
 version = '0.1'
 
-//sourceCompatibility = JavaVersion.VERSION_11
-sourceCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_11
+//sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
     mavenCentral()
@@ -20,19 +21,26 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
+
     compile project(':oahu')
     compile project(':critter-repos')
     compile "org.slf4j:slf4j-api:$slf4jVersion"
     compile "org.jsoup:jsoup:$jsoupVersion"
     compile "net.sourceforge.htmlunit:htmlunit:$htmlUnitVersion"
-    testCompile "org.springframework.boot:spring-boot-starter-test"
+    compile "net.sourceforge.htmlunit:htmlunit:$htmlUnitVersion"
+    //compile "io.lettuce:lettuce-core:$lettuceVersion"
+    // https://mvnrepository.com/artifact/redis.clients/jedis
+    compile "redis.clients:jedis:$jedisVersion"
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
 
 /*
 test {
     useJUnitPlatform()
 }
-*/
 
 task copyJarToDist(type: Copy, dependsOn: jar) {
     from jar.archivePath
@@ -43,6 +51,7 @@ task copyJarToDistWin(type: Copy, dependsOn: jar) {
     from jar.archivePath
     into "c:/opt/lx/harborview/dist/"
 }
+*/
 
 bootJar.enabled = false
 jar.enabled = true
