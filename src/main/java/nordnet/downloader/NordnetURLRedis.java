@@ -39,15 +39,17 @@ public class NordnetURLRedis implements NordnetURL {
         return String.format("/market/options?currency=NOK&underlyingSymbol=%s&expireDate=%s", ticker,  nordnetUnixTime);
     }
 
-    public URL urlFor(String ticker, String currentDate, Jedis jedis) {
+    public URL urlFor(String ticker, String nordnetUnixTime, Jedis jedis) {
         try {
             if (jedis == null) {
                 jedis = getJedis();
             }
+            /*
             var nordnetUnixTime = jedis.get(currentDate);
             if (nordnetUnixTime == null) {
                 throw new RuntimeException(String.format("No such Redis element: %s", currentDate));
             }
+             */
             return new URL("https", "www.nordnet.no",urlFileFor(ticker,nordnetUnixTime));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
@@ -69,23 +71,40 @@ public class NordnetURLRedis implements NordnetURL {
         return jedis;
     }
 
-    private List<String> tickerCategory3() {
-        return new ArrayList<>();
-    }
-    private List<String> tickerCategory2() {
-        return new ArrayList<>();
-    }
-    private List<String> tickerCategory1(String ticker, LocalDate currentDate, Jedis jedis) {
+    private List<String> tickerCategoryX(String ticker, LocalDate currentDate, String redisKey, Jedis jedis) {
         List<String> result = new ArrayList<>();
-        Set<String> expiry_1 = jedis.smembers("expiry-1");
-        for (var e : expiry_1) {
+        Map<String,String>  exipiry = jedis.hgetAll(redisKey);
+
+        for (var entry : exipiry.entrySet()) {
+            var ed = LocalDate.parse(entry.getKey());
+            if (ed.isAfter(currentDate)) {
+                var edUrl = urlFor(ticker, entry.getValue(), jedis);
+                result.add(edUrl.toString());
+            }
+        }
+        /*
+        Set<String> expiry = jedis.smembers(redisKey);
+        for (var e : expiry) {
             var ed = LocalDate.parse(e);
             if (ed.isAfter(currentDate)) {
                 var edUrl = urlFor(ticker, e, jedis);
                 result.add(edUrl.toString());
             }
         }
+         */
         return result;
+    }
+    private List<String> tickerCategory1(String ticker, LocalDate currentDate, Jedis jedis) {
+        return tickerCategoryX(ticker,currentDate,"expiry-1", jedis);
+    }
+    private List<String> tickerCategory2(String ticker, LocalDate currentDate, Jedis jedis) {
+        var expiry_1 = tickerCategoryX(ticker,currentDate,"expiry-1", jedis);
+        var expiry_2 = tickerCategoryX(ticker,currentDate,"expiry-2", jedis);
+        expiry_1.addAll(expiry_2);
+        return  expiry_1;
+    }
+    private List<String> tickerCategory3() {
+        return new ArrayList<>();
     }
     @Override
     public List<String> url(String ticker, LocalDate currentDate) {
@@ -111,7 +130,7 @@ public class NordnetURLRedis implements NordnetURL {
             case "1":
                 return tickerCategory1(ticker,currentDate,jedis);
             case "2":
-                return tickerCategory2();
+                return tickerCategory2(ticker,currentDate,jedis);
             case "3":
                 return tickerCategory3();
         }

@@ -20,7 +20,7 @@ public class TestDownloader {
 
     @Test
     public void test_nordnet_url() {
-        var urlFor = nordnetURL.urlFor("NHY", "2020-09-18", null);
+        var urlFor = nordnetURL.urlFor("NHY", "1600380000000", null);
         var urlForStr = urlFor.toString();
         System.out.println(urlForStr);
         assertThat(urlForStr)
@@ -29,16 +29,12 @@ public class TestDownloader {
 
     @Test
     public void test_nordnet_redis_tickers_1() {
-        //assertThat(2).isEqualTo(2);
         var urls = nordnetURL.url("YAR", LocalDate.of(2020,7,1));
-        assertThat(urls.size()).isEqualTo(4);
+        assertThat(urls.size()).isEqualTo(6);
     }
     @Test
     public void test_nordnet_redis_tickers_2() {
-
-    }
-    @Test
-    public void test_nordnet_redis_tickers_3() {
-
+        var urls = nordnetURL.url("NHY", LocalDate.of(2020,8,1));
+        assertThat(urls.size()).isEqualTo(8);
     }
 }
