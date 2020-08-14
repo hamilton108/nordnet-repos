@@ -24,7 +24,6 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.print.DocFlavor;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -387,8 +386,21 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
 
     Document getDocument(TickerInfo tickerInfo) throws IOException {
+        /*
         Page page = downloader.downloadDerivatives(tickerInfo);
         return Jsoup.parse(page.getWebResponse().getContentAsString());
+
+         */
+        return getDocuments(tickerInfo).get(0);
+    }
+    List<Document> getDocuments(TickerInfo tickerInfo) throws IOException {
+        List<Document> result = new ArrayList<>();
+        List<Page> pages = downloader.downloadDerivatives(tickerInfo);
+
+        for (var page : pages) {
+            result.add(Jsoup.parse(page.getWebResponse().getContentAsString()));
+        }
+        return result;
     }
 
     Tuple2<LocalDate, LocalTime> getTimeInfo(Element el) {

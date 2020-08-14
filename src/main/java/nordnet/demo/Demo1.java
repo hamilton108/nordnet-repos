@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.Serializable;
 
 public class Demo1 {
+   /*
    class MyDownloader implements EtradeDownloader<Page, TickerInfo, Serializable> {
       private boolean javaScriptEnabled = false;
       private WebClient webClient;
@@ -82,4 +83,6 @@ public class Demo1 {
       Element row8 = elements.get(8);
       return row8.getElementsByClass("c01438").first();
    }
+
+    */
 }

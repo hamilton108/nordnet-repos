@@ -1,5 +1,6 @@
 package nordnet.repos;
 
+import com.gargoylesoftware.htmlunit.Page;
 import nordnet.downloader.DownloaderStub;
 import nordnet.downloader.TickerInfo;
 import nordnet.html.Util;
@@ -19,6 +20,7 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
@@ -29,11 +31,10 @@ import static org.assertj.core.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
-    private static String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
+    private static final String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
     //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
-    private StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
-    private EtradeDownloader downloader = new DownloaderStub(storePath);
+    private EtradeDownloader<Page, TickerInfo, Serializable> downloader = new DownloaderStub(storePath);
     private EtradeRepositoryImpl repos;
 
     @Before
@@ -41,10 +42,10 @@ public class TestEtradeRepository {
         repos = new EtradeRepositoryImpl();
         repos.setStorePath(storePath);
 
-        stockMarketRepos = new StockMarketReposStub();
+        StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
         repos.setStockMarketRepository(stockMarketRepos);
 
-        EtradeDownloader downloader = new DownloaderStub(storePath);
+        EtradeDownloader<Page, TickerInfo, Serializable> downloader = new DownloaderStub(storePath);
         repos.setDownloader(downloader);
     }
 

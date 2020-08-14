@@ -6,11 +6,13 @@ import oahu.financial.html.EtradeDownloader;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class DownloaderStub implements EtradeDownloader<Page, TickerInfo, Serializable> {
     private boolean javaScriptEnabled = false;
-    private WebClient webClient;
+    private final WebClient webClient;
     private String storePath;
     private HashMap<String,Integer> counterMap;
     private boolean applyCounter = false;
@@ -52,19 +54,25 @@ public class DownloaderStub implements EtradeDownloader<Page, TickerInfo, Serial
     }
     //endregion Private Methods
 
+
     @Override
-    public Page downloadDerivatives() throws IOException {
-        return null;
+    public List<Page> downloadDerivatives(TickerInfo tickerInfo) {
+        List<Page> result = new ArrayList<>();
+
+        try {
+            var page = webClient.getPage(tickerUrl(tickerInfo.getTicker()));
+            result.add(page);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
+        return result;
     }
-    @Override
-    public Page downloadDerivatives(TickerInfo tickerInfo) throws IOException {
+    public Page xdownloadDerivatives(TickerInfo tickerInfo) throws IOException {
         return webClient.getPage(tickerUrl(tickerInfo.getTicker()));
     }
 
-    @Override
-    public Page downloadIndex(String stockIndex) throws IOException {
-        return null;
-    }
     //region interface EtradeDownloader
     /*
 
@@ -103,5 +111,6 @@ public class DownloaderStub implements EtradeDownloader<Page, TickerInfo, Serial
     public void setApplyCounter(boolean applyCounter) {
         this.applyCounter = applyCounter;
     }
+
     //endregion Properties
 }

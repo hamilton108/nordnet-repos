@@ -1,13 +1,13 @@
 package nordnet.downloader;
 
-import org.springframework.cglib.core.Local;
 import redis.clients.jedis.Jedis;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class NordnetURLRedis implements NordnetURL {
 
