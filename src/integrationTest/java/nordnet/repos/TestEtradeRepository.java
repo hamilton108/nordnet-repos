@@ -34,7 +34,7 @@ public class TestEtradeRepository {
     private static final String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
     //private static String storePath = "c:/opt/lx/nordnet-repos/src/integrationTest/resources/html/derivatives";
 
-    private EtradeDownloader<Page, TickerInfo, Serializable> downloader = new DownloaderStub(storePath);
+    //private EtradeDownloader<Page, TickerInfo, Serializable> downloader = new DownloaderStub(storePath);
     private EtradeRepositoryImpl repos;
 
     @Before

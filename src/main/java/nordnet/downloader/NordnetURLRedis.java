@@ -14,7 +14,7 @@ public class NordnetURLRedis implements NordnetURL {
     private final String host;
     private final int port;
     private final int db;
-    private URL baseURL;
+    private final URL baseURL;
 
     public NordnetURLRedis(String host, int port, int db) {
         this.host = host;

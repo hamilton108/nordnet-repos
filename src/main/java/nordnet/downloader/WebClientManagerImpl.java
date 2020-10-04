@@ -5,6 +5,7 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import oahu.financial.html.WebClientManager;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @Component
@@ -13,13 +14,20 @@ public class WebClientManagerImpl implements WebClientManager<Page> {
 
     @Override
     public Page getPage(String url) {
-        return null;
+        try {
+            WebClient client = getWebClient();
+            return client.getPage(url);
+        }
+        catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override
     public Optional<Page> logout() {
         return Optional.empty();
     }
+
     private WebClient getWebClient() {
         if (webClient == null) {
             webClient = new WebClient();

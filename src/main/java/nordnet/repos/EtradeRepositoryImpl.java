@@ -139,7 +139,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     //--------------------- Properties --------------------------
     //-----------------------------------------------------------
     @Autowired
-    public void setDownloader(EtradeDownloader downloader) {
+    public void setDownloader(EtradeDownloader<Page, TickerInfo, Serializable> downloader) {
         this.downloader = downloader;
     }
 
@@ -245,7 +245,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
         Elements rows = table2.getElementsByTag("tr");
         Optional<LocalDate> expiry = htmlDate(doc);
-        if (!expiry.isPresent()) {
+        if (expiry.isEmpty()) {
             throw new SecurityParseErrorException("Error parsing expiry date");
         }
         for (Element row : rows) {
@@ -298,7 +298,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         Element ticker = tds.get(du.getIndex());
         Optional<Derivative> found = stockMarketRepos.findDerivative(ticker.text());
 
-        if (!found.isPresent()) {
+        if (found.isEmpty()) {
             DerivativeBean derivative2 = new DerivativeBean();
 
             derivative2.setTicker(ticker.text());
@@ -393,7 +393,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
          */
         return getDocuments(tickerInfo).get(0);
     }
-    List<Document> getDocuments(TickerInfo tickerInfo) throws IOException {
+    List<Document> getDocuments(TickerInfo tickerInfo) {
         List<Document> result = new ArrayList<>();
         List<Page> pages = downloader.downloadDerivatives(tickerInfo);
 
@@ -411,7 +411,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         LocalTime tm = LocalTime.parse(txts[2], timeFormatter);
         return new Tuple2<>(ld,tm);
     }
-    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM-yyyy");
-    private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM-yyyy");
+    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
 }
