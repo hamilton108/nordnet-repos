@@ -244,51 +244,59 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         Elements tables = doc.getElementsByTag("tbody");
         Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
         Elements rows = table2.getElementsByTag("tr");
+        /*
         Optional<LocalDate> expiry = htmlDate(doc);
         if (expiry.isEmpty()) {
             throw new SecurityParseErrorException("Error parsing expiry date");
         }
+
+         */
         for (Element row : rows) {
-            Elements tds = row.getElementsByTag("td");
+            try {
+                Elements tds = row.getElementsByTag("td");
 
-            //-------------------- CALLS -----------------------
-            DerivativePriceBean callPrice = new DerivativePriceBean();
-            Optional<Derivative> callDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.CALL);
-            callDerivative.ifPresent(cx -> {
-                ((DerivativeBean)cx).setStock(stock);
-                ((DerivativeBean)cx).setExpiry(expiry.get());
-                callPrice.setDerivative(cx);
+                //-------------------- CALLS -----------------------
+                DerivativePriceBean callPrice = new DerivativePriceBean();
+                Optional<Derivative> callDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.CALL);
+                callDerivative.ifPresent(cx -> {
+                    ((DerivativeBean) cx).setStock(stock);
+                    //((DerivativeBean)cx).setExpiry(expiry.get());
+                    callPrice.setDerivative(cx);
 
-                Element bid_e = tds.get(CALL_BID.getIndex());
-                double bid = Util.parseExercisePrice(bid_e.text());
-                callPrice.setBuy(bid);
+                    Element bid_e = tds.get(CALL_BID.getIndex());
+                    double bid = Util.parseDerivativePrice(bid_e.text());
+                    callPrice.setBuy(bid);
 
-                Element ask_e = tds.get(CALL_ASK.getIndex());
-                double ask = Util.parseExercisePrice(ask_e.text());
-                callPrice.setSell(ask);
+                    Element ask_e = tds.get(CALL_ASK.getIndex());
+                    double ask = Util.parseDerivativePrice(ask_e.text());
+                    callPrice.setSell(ask);
 
-                result.add(callPrice);
-            });
+                    result.add(callPrice);
+                });
 
-            //-------------------- PUTS -----------------------
-            DerivativePriceBean putPrice = new DerivativePriceBean();
-            Optional<Derivative> putDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.PUT);
-            putDerivative.ifPresent(px -> {
-                ((DerivativeBean)px).setStock(stock);
-                ((DerivativeBean)px).setExpiry(expiry.get());
-                putPrice.setDerivative(px);
+                //-------------------- PUTS -----------------------
+                DerivativePriceBean putPrice = new DerivativePriceBean();
+                Optional<Derivative> putDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.PUT);
+                putDerivative.ifPresent(px -> {
+                    ((DerivativeBean) px).setStock(stock);
+                    //((DerivativeBean)px).setExpiry(expiry.get());
+                    putPrice.setDerivative(px);
 
-                Element bid_e = tds.get(PUT_BID.getIndex());
-                double bid = Util.parseExercisePrice(bid_e.text());
-                putPrice.setBuy(bid);
+                    Element bid_e = tds.get(PUT_BID.getIndex());
+                    double bid = Util.parseDerivativePrice(bid_e.text());
+                    putPrice.setBuy(bid);
 
-                Element ask_e = tds.get(PUT_ASK.getIndex());
-                double ask = Util.parseExercisePrice(ask_e.text());
-                putPrice.setSell(ask);
+                    Element ask_e = tds.get(PUT_ASK.getIndex());
+                    double ask = Util.parseDerivativePrice(ask_e.text());
+                    putPrice.setSell(ask);
 
-                result.add(putPrice);
-            });
+                    result.add(putPrice);
+                });
 
+            }
+            catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
         }
         return result;
     }

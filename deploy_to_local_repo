@@ -1,0 +1,11 @@
+#!/bin/bash
+
+VER="0.3.2"
+ARTIFACT="nordnet-repos"
+
+mvn deploy:deploy-file -DgroupId=rcstadheim -DartifactId=${ARTIFACT} \
+    -Dversion=${VER} -Dpackaging=jar -Dfile=build/libs/${ARTIFACT}-${VER}.jar \
+    -Durl=file:/home/rcs/opt/java/mavenlocalrepo
+
+
+exit 0

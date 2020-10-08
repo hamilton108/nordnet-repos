@@ -14,4 +14,9 @@ public class Util {
         return (Element)node;
     }
 
+    public static double parseDerivativePrice(String s) {
+        String[] sx = s.split(",");
+        String sx2 = String.format("%s.%s", sx[0],sx[1]);
+        return Double.parseDouble(sx2);
+    }
 }
