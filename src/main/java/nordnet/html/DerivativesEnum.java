@@ -7,8 +7,8 @@ public enum DerivativesEnum {
    SELECT_INPUT_DATE(2),
 
    STOCK_PRICE_CLOSE(8),
-   STOCK_PRICE_Hi(11),
-   STOCK_PRICE_Lo(12),
+   STOCK_PRICE_HI(11),
+   STOCK_PRICE_LO(12),
 
    CALL_TICKER(2),
    CALL_BID(4),

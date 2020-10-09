@@ -12,6 +12,7 @@ import oahu.functional.Procedure3;
 import oahu.testing.TestUtil;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -60,7 +61,6 @@ public class TestEtradeRepository {
     };
 
     @Test
-    @Ignore
     public void testOpeningPrices_no_file() {
         repos.setOpeningPricesFileName("openingPrices.txt");
         File openingPricesFileName = getOpeningPricesFile();
@@ -69,7 +69,6 @@ public class TestEtradeRepository {
     }
 
     @Test
-    @Ignore
     public void testOpeningPrices_initialized() {
         repos.setOpeningPricesFileName("openingPrices_initialized.txt");
         testOpeningPrices();
@@ -80,24 +79,23 @@ public class TestEtradeRepository {
         assertThat(nhy).as("NHY").isEqualTo(28.00);
 
         double eqnr = openingPrices.get("EQNR");
-        assertThat(eqnr).as("EQNR").isEqualTo(152.00);
+        assertThat(eqnr).as("EQNR").isEqualTo(131.00);
 
         double yar = openingPrices.get("YAR");
         assertThat(yar).as("YAR").isEqualTo(373.40);
     }
 
     @Test
-    @Ignore
     public void testCreateStockPrice_oid() {
         repos.setOpeningPricesFileName("openingPrices_initialized.txt");
         repos.initOpeningPrices();
         Optional<StockPrice> price = repos.stockPrice(2);
         assertThat(price).isNotEmpty();
         price.ifPresent(s -> {
-            assertThat(s.getOpn()).as("getOpn").isEqualTo(152.00);
-            assertThat(s.getHi()).as("getHi").isEqualTo(154.60);
-            assertThat(s.getLo()).as("getLo").isEqualTo(151.95);
-            assertThat(s.getCls()).as("getCls").isEqualTo(153.90);
+            assertThat(s.getOpn()).as("getOpn").isEqualTo(131.00);
+            assertThat(s.getHi()).as("getHi").isEqualTo(133.35);
+            assertThat(s.getLo()).as("getLo").isEqualTo(130.80);
+            assertThat(s.getCls()).as("getCls").isEqualTo(132.30);
         });
     }
 
@@ -177,6 +175,7 @@ public class TestEtradeRepository {
     @Test
     @Ignore
     public void testTable1() {
+        /*
         Document doc = getDocument(new TickerInfo("EQNR"), repos);
         Elements tables = doc.getElementsByTag("tbody");
         assertThat(tables.size()).isEqualTo(3);
@@ -190,16 +189,18 @@ public class TestEtradeRepository {
         assertThat(tds.size()).isEqualTo(22);
 
         Element rowClose = tds.get(STOCK_PRICE_CLOSE.getIndex());
-        Element tdClose = Util.getTd(rowClose);
+        TextNode tdClose = Util.getTd(rowClose);
         myAssert.apply(tdClose,"153.9","Close");
 
         Element rowHi = tds.get(STOCK_PRICE_Hi.getIndex());
-        Element tdHi = Util.getTd(rowHi);
+        TextNode tdHi = Util.getTd(rowHi);
         myAssert.apply(tdHi,"154.6","Hi");
 
         Element rowLo = tds.get(STOCK_PRICE_Lo.getIndex());
-        Element tdLo = Util.getTd(rowLo);
+        TextNode tdLo = Util.getTd(rowLo);
         myAssert.apply(tdLo,"151.95","Lo");
+
+         */
 
     }
 

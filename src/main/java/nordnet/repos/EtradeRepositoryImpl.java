@@ -5,7 +5,6 @@ import critterrepos.beans.StockPriceBean;
 import critterrepos.beans.options.DerivativeBean;
 import critterrepos.beans.options.DerivativePriceBean;
 import nordnet.downloader.TickerInfo;
-import nordnet.exception.SecurityParseErrorException;
 import nordnet.html.DerivativesEnum;
 import nordnet.html.Util;
 import oahu.dto.Tuple;
@@ -20,6 +19,7 @@ import oahu.financial.repository.StockMarketRepository;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -198,7 +198,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
                     Document doc = getDocument(tickerInfo);
                     Elements tds = stockPriceTds(doc);
 
-                    double close = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
+                    double close = getLast(tds); //textNodeToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
 
                     printWriter.println(String.format(Locale.US, "%s:%.2f", tik, close));
 
@@ -264,11 +264,11 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
                     callPrice.setDerivative(cx);
 
                     Element bid_e = tds.get(CALL_BID.getIndex());
-                    double bid = Util.parseDerivativePrice(bid_e.text());
+                    double bid = Util.decimalStringToDouble(bid_e.text());
                     callPrice.setBuy(bid);
 
                     Element ask_e = tds.get(CALL_ASK.getIndex());
-                    double ask = Util.parseDerivativePrice(ask_e.text());
+                    double ask = Util.decimalStringToDouble(ask_e.text());
                     callPrice.setSell(ask);
 
                     result.add(callPrice);
@@ -283,11 +283,11 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
                     putPrice.setDerivative(px);
 
                     Element bid_e = tds.get(PUT_BID.getIndex());
-                    double bid = Util.parseDerivativePrice(bid_e.text());
+                    double bid = Util.decimalStringToDouble(bid_e.text());
                     putPrice.setBuy(bid);
 
                     Element ask_e = tds.get(PUT_ASK.getIndex());
-                    double ask = Util.parseDerivativePrice(ask_e.text());
+                    double ask = Util.decimalStringToDouble(ask_e.text());
                     putPrice.setSell(ask);
 
                     result.add(putPrice);
@@ -352,11 +352,11 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
         Elements tds =  stockPriceTds(doc);
 
-        double close = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
+        double close = getLast(tds); //textNodeToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
 
-        double hi = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_Hi));
+        double hi = getHi(tds); //textNodeToDouble(stockPriceElement(tds, STOCK_PRICE_Hi));
 
-        double lo = elementTextToDouble(stockPriceElement(tds, STOCK_PRICE_Lo));
+        double lo = getLo(tds); //textNodeToDouble(stockPriceElement(tds, STOCK_PRICE_Lo));
 
         double open = openingPrices.get(stock.getTicker());
 
@@ -383,14 +383,34 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         return row1.getElementsByTag("td");
     }
 
+    private double textNodeToDouble(TextNode el) {
+        return Double.parseDouble(el.text());
+    }
+
+    /*
     private double elementTextToDouble(Element el) {
         return Double.parseDouble(el.text());
     }
-    private Element stockPriceElement(Elements tds, DerivativesEnum rowIndex) {
+    private TextNode stockPriceElement(Elements tds, DerivativesEnum rowIndex) {
         Element row = tds.get(rowIndex.getIndex());
         //return row.getElementsByClass("c01438").first();
         //return row.getElementsByClass(TD_CLASS.getText()).first();
         return Util.getTd(row);
+    }
+     */
+
+    private double getLast(Elements tds) {
+        Element td = tds.get(STOCK_PRICE_CLOSE.getIndex());
+        TextNode node = (TextNode)td.childNode(0).childNode(0).childNode(2);
+        return Double.parseDouble(node.text());
+    }
+    private double getHi(Elements tds) {
+        Element td = tds.get(STOCK_PRICE_HI.getIndex());
+        return Util.decimalStringToDouble(td.text());
+    }
+    private double getLo(Elements tds) {
+        Element td = tds.get(STOCK_PRICE_LO.getIndex());
+        return Util.decimalStringToDouble(td.text());
     }
 
     Document getDocument(TickerInfo tickerInfo) throws IOException {
