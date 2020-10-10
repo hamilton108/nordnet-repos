@@ -1,7 +1,7 @@
 package nordnet.repos;
 
-import com.gargoylesoftware.htmlunit.Page;
 import nordnet.downloader.DownloaderStub;
+import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import nordnet.html.Util;
 import oahu.financial.Derivative;
@@ -12,7 +12,6 @@ import oahu.functional.Procedure3;
 import oahu.testing.TestUtil;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -28,7 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static nordnet.html.DerivativesEnum.*;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 public class TestEtradeRepository {
@@ -46,7 +45,7 @@ public class TestEtradeRepository {
         StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
         repos.setStockMarketRepository(stockMarketRepos);
 
-        EtradeDownloader<Page, TickerInfo, Serializable> downloader = new DownloaderStub(storePath);
+        EtradeDownloader<PageInfo, TickerInfo, Serializable> downloader = new DownloaderStub(storePath);
         repos.setDownloader(downloader);
     }
 

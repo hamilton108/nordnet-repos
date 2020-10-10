@@ -19,7 +19,7 @@ public class TestDownloader {
 
     @Test
     public void test_nordnet_url() {
-        var urlFor = nordnetURL.urlFor("NHY", "1600380000000", null);
+        var urlFor = nordnetURL.urlFor("NHY", "1600380000000");
         var urlForStr = urlFor.toString();
         System.out.println(urlForStr);
         assertThat(urlForStr)

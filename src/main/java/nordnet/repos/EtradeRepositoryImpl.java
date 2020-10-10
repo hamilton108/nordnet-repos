@@ -4,6 +4,7 @@ import com.gargoylesoftware.htmlunit.Page;
 import critterrepos.beans.StockPriceBean;
 import critterrepos.beans.options.DerivativeBean;
 import critterrepos.beans.options.DerivativePriceBean;
+import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import nordnet.html.DerivativesEnum;
 import nordnet.html.Util;
@@ -38,7 +39,7 @@ import static nordnet.html.DerivativesStringEnum.INPUT_LABEL_CLASS;
 
 @Component
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
-    private EtradeDownloader<Page, TickerInfo, Serializable> downloader;
+    private EtradeDownloader<PageInfo, TickerInfo, Serializable> downloader;
     private StockMarketRepository stockMarketRepos;
 
     private String storePath;
@@ -139,7 +140,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     //--------------------- Properties --------------------------
     //-----------------------------------------------------------
     @Autowired
-    public void setDownloader(EtradeDownloader<Page, TickerInfo, Serializable> downloader) {
+    public void setDownloader(EtradeDownloader<PageInfo, TickerInfo, Serializable> downloader) {
         this.downloader = downloader;
     }
 
@@ -295,7 +296,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
             }
             catch (Exception e) {
-                System.out.println(e.getMessage());
+                //System.out.println(e.getMessage());
             }
         }
         return result;
@@ -423,10 +424,10 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
     List<Document> getDocuments(TickerInfo tickerInfo) {
         List<Document> result = new ArrayList<>();
-        List<Page> pages = downloader.downloadDerivatives(tickerInfo);
+        List<PageInfo> pages = downloader.downloadDerivatives(tickerInfo);
 
         for (var page : pages) {
-            result.add(Jsoup.parse(page.getWebResponse().getContentAsString()));
+            result.add(Jsoup.parse(page.getPage().getWebResponse().getContentAsString()));
         }
         return result;
     }

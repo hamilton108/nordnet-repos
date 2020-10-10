@@ -1,6 +1,5 @@
 package nordnet.downloader;
 
-import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import oahu.financial.html.EtradeDownloader;
 
@@ -10,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class DownloaderStub implements EtradeDownloader<Page, TickerInfo, Serializable> {
+public class DownloaderStub implements EtradeDownloader<PageInfo, TickerInfo, Serializable> {
     private boolean javaScriptEnabled = false;
     private final WebClient webClient;
     private String storePath;
@@ -30,8 +29,8 @@ public class DownloaderStub implements EtradeDownloader<Page, TickerInfo, Serial
         if (counterMap == null) {
             counterMap = new HashMap<>();
         }
-        Integer counter = null;
-        if (counterMap.containsKey(ticker) == false) {
+        Integer counter;
+        if (!counterMap.containsKey(ticker)) {
             counterMap.put(ticker,1);
             counter = 1;
         }
@@ -45,7 +44,7 @@ public class DownloaderStub implements EtradeDownloader<Page, TickerInfo, Serial
 
     //region Private Methods
     private String tickerUrl(String ticker) {
-        if (applyCounter == true) {
+        if (applyCounter) {
             return String.format("file:///%s/%s-%d.html", storePath, ticker, getCounter(ticker));
         }
         else {
@@ -56,21 +55,18 @@ public class DownloaderStub implements EtradeDownloader<Page, TickerInfo, Serial
 
 
     @Override
-    public List<Page> downloadDerivatives(TickerInfo tickerInfo) {
-        List<Page> result = new ArrayList<>();
+    public List<PageInfo> downloadDerivatives(TickerInfo tickerInfo) {
+        List<PageInfo> result = new ArrayList<>();
 
         try {
             var page = webClient.getPage(tickerUrl(tickerInfo.getTicker()));
-            result.add(page);
+            result.add(new PageInfo(page, "N/A"));
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
 
         return result;
-    }
-    public Page xdownloadDerivatives(TickerInfo tickerInfo) throws IOException {
-        return webClient.getPage(tickerUrl(tickerInfo.getTicker()));
     }
 
     //region interface EtradeDownloader

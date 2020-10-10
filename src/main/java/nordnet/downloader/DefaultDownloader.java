@@ -8,9 +8,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultDownloader implements EtradeDownloader<Page, TickerInfo, Serializable> {
+public class DefaultDownloader implements EtradeDownloader<PageInfo, TickerInfo, Serializable> {
     private final WebClientManager<Page> webClientManager;
-    private final NordnetURL nordnetURL;
+    private final NordnetURL<URLInfo> nordnetURL;
 
     public DefaultDownloader(String host, int port, int db) {
         this.webClientManager = new WebClientManagerImpl();
@@ -18,22 +18,18 @@ public class DefaultDownloader implements EtradeDownloader<Page, TickerInfo, Ser
     }
 
     @Override
-    public List<Page> downloadDerivatives(TickerInfo tickerInfo) {
-        List<Page> result = new ArrayList<>();
+    public List<PageInfo> downloadDerivatives(TickerInfo tickerInfo) {
+        List<PageInfo> result = new ArrayList<>();
 
         var urls = nordnetURL.url(tickerInfo.getTicker());
 
         for (var url : urls) {
             System.out.println(url);
-            var page = webClientManager.getPage(url);
-            result.add(page);
+            var page = webClientManager.getPage(url.getUrl());
+            result.add(new PageInfo(page, url.getUnixTime()));
         }
 
         return result;
-    }
-
-    private String tickerUrl(String ticker) {
-        return String.format("file:///home/rcs/opt/java/harborview/feed/%s.html", ticker);
     }
 
     /*
