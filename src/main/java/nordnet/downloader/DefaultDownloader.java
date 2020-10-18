@@ -7,10 +7,12 @@ import oahu.financial.html.WebClientManager;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class DefaultDownloader implements EtradeDownloader<PageInfo, TickerInfo, Serializable> {
     private final WebClientManager<Page> webClientManager;
     private final NordnetURL<URLInfo> nordnetURL;
+    private Consumer<PageInfo> onPageDownloaded;
 
     public DefaultDownloader(String host, int port, int db) {
         this.webClientManager = new WebClientManagerImpl();
@@ -24,12 +26,19 @@ public class DefaultDownloader implements EtradeDownloader<PageInfo, TickerInfo,
         var urls = nordnetURL.url(tickerInfo.getTicker());
 
         for (var url : urls) {
-            System.out.println(url);
             var page = webClientManager.getPage(url.getUrl());
-            result.add(new PageInfo(page, url.getUnixTime()));
+            var pageInfo = new PageInfo(page, tickerInfo, url.getUnixTime());
+            result.add(pageInfo);
+            if (onPageDownloaded != null) {
+                onPageDownloaded.accept(pageInfo); 
+            }
         }
 
         return result;
+    }
+
+    public void setOnPageDownloaded(Consumer<PageInfo> onPageDownloaded) {
+        this.onPageDownloaded = onPageDownloaded;
     }
 
     /*

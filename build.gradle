@@ -16,7 +16,7 @@ group = 'hamilton108'
 
 //archivesBaseName = 'netfondsrepos'
 
-version = '0.4.0'
+version = '1.0.0-SNAPSHOT'
 
 sourceCompatibility = JavaVersion.VERSION_11
 //sourceCompatibility = JavaVersion.VERSION_1_8
@@ -34,7 +34,6 @@ dependencies {
     compile project(':critter-repos')
     compile "org.slf4j:slf4j-api:$slf4jVersion"
     compile "org.jsoup:jsoup:$jsoupVersion"
-    compile "net.sourceforge.htmlunit:htmlunit:$htmlUnitVersion"
     compile "net.sourceforge.htmlunit:htmlunit:$htmlUnitVersion"
     //compile "io.lettuce:lettuce-core:$lettuceVersion"
     // https://mvnrepository.com/artifact/redis.clients/jedis

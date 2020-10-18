@@ -60,7 +60,7 @@ public class DownloaderStub implements EtradeDownloader<PageInfo, TickerInfo, Se
 
         try {
             var page = webClient.getPage(tickerUrl(tickerInfo.getTicker()));
-            result.add(new PageInfo(page, "N/A"));
+            result.add(new PageInfo(page,tickerInfo, "1"));
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);

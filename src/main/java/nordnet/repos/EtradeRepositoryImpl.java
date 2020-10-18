@@ -1,6 +1,5 @@
 package nordnet.repos;
 
-import com.gargoylesoftware.htmlunit.Page;
 import critterrepos.beans.StockPriceBean;
 import critterrepos.beans.options.DerivativeBean;
 import critterrepos.beans.options.DerivativePriceBean;
@@ -47,7 +46,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private String openingPricesFileName;
 
     //private List<StockPrice> openingPrices = new ArrayList<>();
-    private Map<String,Double> openingPrices = new HashMap<>();
+    private final Map<String,Double> openingPrices = new HashMap<>();
 
     @Override
     public Optional<DerivativePrice> findDerivativePrice(Tuple<String> optionInfo) {

@@ -4,9 +4,11 @@ import com.gargoylesoftware.htmlunit.Page;
 
 public class PageInfo {
     private final Page page;
+    private final TickerInfo tickerInfo;
     private final String unixTime;
-    public PageInfo(Page page, String unixTime) {
+    public PageInfo(Page page, TickerInfo tickerInfo, String unixTime) {
         this.page = page;
+        this.tickerInfo = tickerInfo;
         this.unixTime = unixTime;
     }
 
@@ -16,5 +18,9 @@ public class PageInfo {
 
     public String getUnixTime() {
         return unixTime;
+    }
+
+    public TickerInfo getTickerInfo() {
+        return tickerInfo;
     }
 }

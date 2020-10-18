@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VER="0.4.0"
+VER="1.0.0-SNAPSHOT"
 ARTIFACT="nordnet-repos"
 
 mvn deploy:deploy-file -DgroupId=rcstadheim -DartifactId=${ARTIFACT} \
