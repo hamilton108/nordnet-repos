@@ -9,14 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class NordnetURLRedis implements NordnetURL<URLInfo> {
+public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
 
     private final String host;
     private final int port;
     private final int db;
     //private final URL baseURL;
 
-    public NordnetURLRedis(String host, int port, int db) {
+    public NordnetRedis(String host, int port, int db) {
         this.host = host;
         this.port = port;
         this.db = db;
@@ -30,10 +30,10 @@ public class NordnetURLRedis implements NordnetURL<URLInfo> {
          */
     }
 
-    public NordnetURLRedis(String host) {
+    public NordnetRedis(String host) {
         this(host,6379,0);
     }
-    public NordnetURLRedis(String host, int db) {
+    public NordnetRedis(String host, int db) {
         this(host,6379,db);
     }
 

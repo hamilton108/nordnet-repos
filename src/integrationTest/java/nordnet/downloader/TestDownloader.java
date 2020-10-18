@@ -11,10 +11,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 public class TestDownloader {
-    private NordnetURLRedis nordnetURL;
+    private NordnetRedis nordnetURL;
     @Before
     public void init() {
-        this.nordnetURL = new NordnetURLRedis("172.20.1.2", 5);
+        this.nordnetURL = new NordnetRedis("172.20.1.2", 5);
     }
 
     @Test
