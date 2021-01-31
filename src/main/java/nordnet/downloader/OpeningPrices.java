@@ -1,5 +1,9 @@
 package nordnet.downloader;
 
-public interface OpeningPrices {
+import java.time.LocalDate;
+import java.util.Map;
 
+public interface OpeningPrices {
+    void savePrices(LocalDate curDate, Map<String,String> prices);
+    Map<String,String> fetchPrices(LocalDate curDate);
 }

@@ -109,6 +109,34 @@ public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
         return new ArrayList<>();
     }
 
+    /******************************************************************
+    ********************* Interface OpeningPrices *********************
+    ******************************************************************/
+    @Override
+    public void savePrices(LocalDate curDate, Map<String, String> prices) {
+        var jedis = getJedis();
+        jedis.hset(redisKey(curDate), prices);
+    }
+
+    @Override
+    public Map<String, String> fetchPrices(LocalDate curDate) {
+        var jedis = getJedis();
+        return jedis.hgetAll(redisKey(curDate));
+
+        /*
+        var jedisResult = jedis.hgetAll(key);
+        for (Map.Entry<String,String> items = jedisResult.entrySet()) {
+
+        }
+         */
+    }
+
+    private String redisKey(LocalDate curDate) {
+        return String.format("%d-%d-%d",
+                curDate.getYear(),
+                curDate.getMonth().getValue(),
+                curDate.getDayOfMonth());
+    }
     /*
     private List<String> withConnection(Function<StatefulRedisConnection<String,String>,List<String>> fn) {
         var uri = RedisURI.Builder.redis(host, port).withDatabase(db).build();

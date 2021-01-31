@@ -1,6 +1,7 @@
 package nordnet.repos;
 
 import nordnet.downloader.DownloaderStub;
+import nordnet.downloader.NordnetRedis;
 import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import nordnet.html.Util;
@@ -55,10 +56,13 @@ public class TestEtradeRepository {
         return TestUtil.callMethodFor(EtradeRepositoryImpl.class, curRepos, "getDocument", paramsTypes, params);
     }
 
+    /*
     private Procedure3<Element,String,String> myAssert = (el, val, msg) -> {
         assertThat(el.text()).as(String.format("%s: %s",msg,val)).isEqualTo(val);
     };
+     */
 
+    /*
     @Test
     public void testOpeningPrices_no_file() {
         repos.setOpeningPricesFileName("openingPrices.txt");
@@ -97,7 +101,32 @@ public class TestEtradeRepository {
             assertThat(s.getCls()).as("getCls").isEqualTo(132.30);
         });
     }
+     */
 
+    @Test
+    public void test_opening_prices_in_redis() {
+        var nordnetRedis = new NordnetRedis("172.20.1.2", 5);
+        repos.setNordnetRedis(nordnetRedis);
+        repos.setCurrentDate(LocalDate.of(2020,10,15));
+        repos.initOpeningPrices();
+        Optional<StockPrice> price = repos.stockPrice(2);
+        assertThat(price).isNotEmpty();
+        price.ifPresent(s -> {
+            assertThat(s.getOpn()).as("getOpn").isEqualTo(131.00);
+            assertThat(s.getHi()).as("getHi").isEqualTo(133.35);
+            assertThat(s.getLo()).as("getLo").isEqualTo(130.80);
+            assertThat(s.getCls()).as("getCls").isEqualTo(132.30);
+        });
+    }
+
+    @Test
+    public void test_opening_prices_lacking_in_redis() {
+        var nordnetRedis = new NordnetRedis("172.20.1.2", 5);
+        repos.setNordnetRedis(nordnetRedis);
+        repos.setCurrentDate(LocalDate.of(2020,10,31));
+        assertThat(1).isEqualTo(1);
+    }
+    
     @Test
     public void testCallPutDefs() {
         Collection<Derivative> defs = repos.callPutDefs(2);
@@ -163,6 +192,7 @@ public class TestEtradeRepository {
         });
     }
 
+    /*
     private void testOpeningPrices() {
         repos.initOpeningPrices();
         File openingPricesFileName = getOpeningPricesFile();
@@ -170,6 +200,7 @@ public class TestEtradeRepository {
         Map<String,Double> openingPrices = repos.getOpeningPrices();
         assertThat(openingPrices.size()).isEqualTo(3);
     }
+     */
 
     @Test
     @Ignore
@@ -244,7 +275,10 @@ public class TestEtradeRepository {
         });
     }
 
+    /*
     private File getOpeningPricesFile() {
         return new File(repos.getOpeningPricesFileName());
     }
+    
+     */
 }

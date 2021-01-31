@@ -3,12 +3,12 @@ package nordnet.repos;
 import critterrepos.beans.StockPriceBean;
 import critterrepos.beans.options.DerivativeBean;
 import critterrepos.beans.options.DerivativePriceBean;
+import nordnet.downloader.NordnetRedis;
 import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import nordnet.html.DerivativesEnum;
 import nordnet.html.Util;
 import oahu.dto.Tuple;
-import oahu.dto.Tuple2;
 import oahu.financial.Derivative;
 import oahu.financial.DerivativePrice;
 import oahu.financial.Stock;
@@ -28,8 +28,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,13 +38,15 @@ import static nordnet.html.DerivativesStringEnum.INPUT_LABEL_CLASS;
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private EtradeDownloader<PageInfo, TickerInfo, Serializable> downloader;
     private StockMarketRepository stockMarketRepos;
+    private LocalDate currentDate = LocalDate.now();
 
     private String storePath;
 
-    private String openingPricesFileName;
+    //private String openingPricesFileName;
 
     //private List<StockPrice> openingPrices = new ArrayList<>();
-    private final Map<String,Double> openingPrices = new HashMap<>();
+    //private final Map<String,Double> openingPrices = new HashMap<>();
+    private NordnetRedis nordnetRedis;
 
     @Override
     public Optional<DerivativePrice> findDerivativePrice(Tuple<String> optionInfo) {
@@ -60,7 +60,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
             Document doc = getDocument(tickerInfo);
             Stock stock = stockMarketRepos.findStock(ticker);
             return createStockPrice(doc, stock);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return Optional.empty();
         }
@@ -78,7 +78,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
             Document doc = getDocument(new TickerInfo(ticker));
             Stock stock = stockMarketRepos.findStock(ticker);
             return createDerivatives(doc,stock).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.PUT).collect(Collectors.toList());
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -96,7 +96,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
             Document doc = getDocument(new TickerInfo(ticker));
             Stock stock = stockMarketRepos.findStock(ticker);
             return createDerivatives(doc,stock).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.CALL).collect(Collectors.toList());
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -119,7 +119,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         try {
             Document doc = getDocument(new TickerInfo(ticker));
             return createDefs(doc);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -155,6 +155,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     public String getStorePath() {
         return storePath;
     }
+    
+    /*
     public String getOpeningPricesFileName() {
         return String.format("%s/%s",storePath,openingPricesFileName);
     }
@@ -165,7 +167,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     public Map<String,Double> getOpeningPrices() {
         return openingPrices;
     }
-    /*
+    
     public void setOpeningPrices(List<StockPrice> openingPrices) {
         this.openingPrices = openingPrices;
     }
@@ -175,6 +177,12 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     //-------------- Public methods --------------------
     //-----------------------------------------------------------
     public void initOpeningPrices() {
+        var prices = nordnetRedis.fetchPrices(currentDate);
+        if (prices.isEmpty()) {
+
+        }
+        System.out.println(prices); 
+        /*
         if (openingPrices.size() > 0) {
             return;
         }
@@ -209,6 +217,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        
+         */
     }
 
     //-----------------------------------------------------------
@@ -358,7 +368,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
         double lo = getLo(tds); //textNodeToDouble(stockPriceElement(tds, STOCK_PRICE_Lo));
 
-        double open = openingPrices.get(stock.getTicker());
+        double open = 12.0; //openingPrices.get(stock.getTicker());
 
         StockPriceBean result = new StockPriceBean();
         result.setOpn(open);
@@ -382,10 +392,12 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         Element row1 = rows.first();
         return row1.getElementsByTag("td");
     }
-
+    
+    /*
     private double textNodeToDouble(TextNode el) {
         return Double.parseDouble(el.text());
     }
+     */
 
     /*
     private double elementTextToDouble(Element el) {
@@ -413,14 +425,10 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         return Util.decimalStringToDouble(td.text());
     }
 
-    Document getDocument(TickerInfo tickerInfo) throws IOException {
-        /*
-        Page page = downloader.downloadDerivatives(tickerInfo);
-        return Jsoup.parse(page.getWebResponse().getContentAsString());
-
-         */
+    Document getDocument(TickerInfo tickerInfo) {
         return getDocuments(tickerInfo).get(0);
     }
+    
     List<Document> getDocuments(TickerInfo tickerInfo) {
         List<Document> result = new ArrayList<>();
         List<PageInfo> pages = downloader.downloadDerivatives(tickerInfo);
@@ -431,6 +439,14 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         return result;
     }
 
+    public void setNordnetRedis(NordnetRedis nordnetRedis) {
+        this.nordnetRedis = nordnetRedis;    
+    }
+
+    public void setCurrentDate(LocalDate currentDate) {
+        this.currentDate = currentDate;
+    }
+    /*
     Tuple2<LocalDate, LocalTime> getTimeInfo(Element el) {
         // fredag 23/11-2018 18:30:05
         String txt = el.text();
@@ -439,7 +455,10 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         LocalTime tm = LocalTime.parse(txts[2], timeFormatter);
         return new Tuple2<>(ld,tm);
     }
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM-yyyy");
-    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+     */
+    
+    
+    //private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM-yyyy");
+    //private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
 }

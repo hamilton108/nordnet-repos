@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import redis
+import argparse
 
 TICKERS = {
     "AKERBP": 1,
@@ -28,53 +29,73 @@ TICKERS = {
     "YAR": 1,
 }
 
-EXPIRY_1 = {
-    "2020-08-21": 1597960800000,
-    "2020-09-18": 1600380000000,
-    "2020-10-16": 1602799200000,
-    "2020-12-18": 1608246000000,
-    "2021-03-19": 1616108400000,
-    "2021-06-18": 1623967200000
-}
 
-EXPIRY_2 = {
-    "2020-07-24": 1595541600000,
-    "2020-07-31": 1596146400000,
-    "2020-08-07": 1596751200000,
-    "2020-08-14": 1597356000000
-}
+def expiry_1(is_test):
+    if is_test == True:
+        return
+        {
+            "2020-08-21": 1597960800000,
+            "2020-09-18": 1600380000000,
+            "2020-10-16": 1602799200000,
+            "2020-12-18": 1608246000000,
+            "2021-03-19": 1616108400000,
+            "2021-06-18": 1623967200000,
+        }
+
+    else:
+        return
+        {
+            "2021-02-19": 1611874800000,
+            "2021-03-19": 1616108400000,
+            "2021-04-16": 1618524000000,
+            "2021-06-18": 1623967200000,
+            "2021-09-17": 1631829600000,
+            "2021-12-17": 1639695600000,
+        }
+
+
+def expiry_2(is_test):
+    if is_test == True:
+        {
+            "2020-07-24": 1595541600000,
+            "2020-07-31": 1596146400000,
+            "2020-08-07": 1596751200000,
+            "2020-08-14": 1597356000000,
+        }
+    else:
+        return
+        {
+            "2021-02-05": 1612479600000,
+            "2021-02-12": 1613084400000,
+            "2021-02-26": 1614294000000,
+        }
+
 
 EXPIRY_3 = {
     "2021-12-17": 1639695600000,
     "2022-06-17": 1655416800000
 }
 
-r = redis.Redis(
-    host='172.20.1.2', port=6379, db=5
-)
+
+def init_redis(db):
+    return redis.Redis(host='172.20.1.2', port=6379, db=db)
 
 
-def populate_tickers():
+def populate_tickers(r):
     for k, v in TICKERS.items():
         print(k)
         r.hset("expiry", k, v)
 
 
-def populate_expiry_x(ex, index):
+def populate_expiry_x(ex, index, r):
     redis_key = "expiry-%d" % index
     for k, v in ex.items():
         r.hset(redis_key, k, v)
 
-    """
-    for v in ex:
-        print(v)
-        r.sadd(key, v)
-    """
 
-
-def populate_expiry():
-    populate_expiry_x(EXPIRY_1, 1)
-    populate_expiry_x(EXPIRY_2, 2)
+def populate_expiry(is_test, r):
+    populate_expiry_x(expiry_1(is_test), 1, r)
+    populate_expiry_x(expiry_2(is_test), 2, r)
     # populate_expiry_x(EXPIRY_3, 3)
 
     print(r.hgetall("expiry"))
@@ -83,6 +104,32 @@ def populate_expiry():
     # print(r.hgetall("expiry-3"))
 
 
-r.flushall()
-populate_tickers()
-populate_expiry()
+# def populate(is_test, flush_all, add_tickers):
+def populate(args):
+    if args.is_test == True:
+        db = 5
+    else:
+        db = 0
+    r = init_redis(db)
+    if args.flush_all == True:
+        r.flushall()
+    if args.add_tickers == True:
+        populate_tickers(r)
+    populate_expiry(args.is_test, r)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Populate Redis cache.')
+    #parser.add_argument('integers', metavar='N', type=int, nargs='+',help='an integer for the accumulator')
+    parser.add_argument('--test', dest='is_test', action='store_true',
+                        # const=sum,
+                        default=False, help='Is test. default: false')
+
+    parser.add_argument('--flushall', dest='flush_all', action='store_true',
+                        default=False, help='Flush Redis cache before populate. default: false')
+
+    parser.add_argument('--tickers', dest='add_tickers', action='store_true',
+                        default=False, help='Populate tickers. default: false')
+
+    args = parser.parse_args()
+    populate(args)
