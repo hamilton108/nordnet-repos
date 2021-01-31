@@ -32,43 +32,41 @@ TICKERS = {
 
 def expiry_1(is_test):
     if is_test == True:
-        return
-        {
+        result = {
             "2020-08-21": 1597960800000,
             "2020-09-18": 1600380000000,
             "2020-10-16": 1602799200000,
             "2020-12-18": 1608246000000,
             "2021-03-19": 1616108400000,
-            "2021-06-18": 1623967200000,
+            "2021-06-18": 1623967200000
         }
-
     else:
-        return
-        {
+        result = {
             "2021-02-19": 1611874800000,
             "2021-03-19": 1616108400000,
             "2021-04-16": 1618524000000,
             "2021-06-18": 1623967200000,
             "2021-09-17": 1631829600000,
-            "2021-12-17": 1639695600000,
+            "2021-12-17": 1639695600000
         }
+    return result
 
 
 def expiry_2(is_test):
     if is_test == True:
-        {
+        result = {
             "2020-07-24": 1595541600000,
             "2020-07-31": 1596146400000,
             "2020-08-07": 1596751200000,
             "2020-08-14": 1597356000000,
         }
     else:
-        return
-        {
+        result = {
             "2021-02-05": 1612479600000,
             "2021-02-12": 1613084400000,
             "2021-02-26": 1614294000000,
         }
+    return result
 
 
 EXPIRY_3 = {
@@ -96,12 +94,10 @@ def populate_expiry_x(ex, index, r):
 def populate_expiry(is_test, r):
     populate_expiry_x(expiry_1(is_test), 1, r)
     populate_expiry_x(expiry_2(is_test), 2, r)
-    # populate_expiry_x(EXPIRY_3, 3)
 
     print(r.hgetall("expiry"))
     print(r.hgetall("expiry-1"))
     print(r.hgetall("expiry-2"))
-    # print(r.hgetall("expiry-3"))
 
 
 # def populate(is_test, flush_all, add_tickers):
