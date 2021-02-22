@@ -131,6 +131,14 @@ public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
          */
     }
 
+    @Override
+    public double fetchPrice(LocalDate curDate, String ticker) {
+        var jedis = getJedis();
+        var hashKey= redisKey(curDate);
+        String priceS = jedis.hget(hashKey, ticker);
+        return Double.parseDouble(priceS);
+    }
+
     private String redisKey(LocalDate curDate) {
         return String.format("%d-%d-%d",
                 curDate.getYear(),

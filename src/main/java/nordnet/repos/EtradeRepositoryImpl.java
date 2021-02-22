@@ -42,6 +42,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     private String storePath;
 
+    private Map<String,Double> openingPrices;
     //private String openingPricesFileName;
 
     //private List<StockPrice> openingPrices = new ArrayList<>();
@@ -181,44 +182,22 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         if (prices.isEmpty()) {
 
         }
-        System.out.println(prices); 
-        /*
-        if (openingPrices.size() > 0) {
-            return;
+        else {
+            openingPrices = mapOpeningPrices(prices);
         }
-        try {
-            File cachedOpeningPrices = new File(getOpeningPricesFileName());
-            if (cachedOpeningPrices.exists()) {
-                List<String> lines = Files.readAllLines(Paths.get(getOpeningPricesFileName()));
-                for (String line : lines) {
-                    String[] linex = line.split(":");
-                    Double price = Double.parseDouble(linex[1]);
-                    openingPrices.put(linex[0], price);
-                }
-            }
-            else {
-                FileWriter writer = new FileWriter(getOpeningPricesFileName());
-                PrintWriter printWriter = new PrintWriter(writer);
-                Collection<Stock> stocks = stockMarketRepos.getStocks();
-                for (Stock stock : stocks) {
-                    String tik = stock.getTicker();
-                    TickerInfo tickerInfo = new TickerInfo(tik);
-                    Document doc = getDocument(tickerInfo);
-                    Elements tds = stockPriceTds(doc);
+    }
 
-                    double close = getLast(tds); //textNodeToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
-
-                    printWriter.println(String.format(Locale.US, "%s:%.2f", tik, close));
-
-                    openingPrices.put(tik, close);
-                }
-                printWriter.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    private Map<String, Double> mapOpeningPrices(Map<String, String> prices) {
+        var result = new HashMap<String,Double>();
+        for (var items : prices.entrySet()) {
+            var value = Double.parseDouble(items.getValue());
+            result.put(items.getKey(), value);
         }
-        
-         */
+        return result;
+    }
+
+    private double fetchOpeningPrice(String ticker) {
+        return nordnetRedis.fetchPrice(currentDate, ticker);
     }
 
     //-----------------------------------------------------------
@@ -368,7 +347,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
         double lo = getLo(tds); //textNodeToDouble(stockPriceElement(tds, STOCK_PRICE_Lo));
 
-        double open = 12.0; //openingPrices.get(stock.getTicker());
+        double open = fetchOpeningPrice(stock.getTicker()); //  openingPrices.get(stock.getTicker());
 
         StockPriceBean result = new StockPriceBean();
         result.setOpn(open);

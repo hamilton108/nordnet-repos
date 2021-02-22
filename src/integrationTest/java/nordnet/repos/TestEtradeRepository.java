@@ -107,8 +107,8 @@ public class TestEtradeRepository {
     public void test_opening_prices_in_redis() {
         var nordnetRedis = new NordnetRedis("172.20.1.2", 5);
         repos.setNordnetRedis(nordnetRedis);
-        repos.setCurrentDate(LocalDate.of(2020,10,15));
-        repos.initOpeningPrices();
+        repos.setCurrentDate(LocalDate.of(2020,10,5));
+        //repos.initOpeningPrices();
         Optional<StockPrice> price = repos.stockPrice(2);
         assertThat(price).isNotEmpty();
         price.ifPresent(s -> {
