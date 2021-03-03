@@ -1,18 +1,15 @@
 package nordnet.repos;
 
 import critterrepos.beans.StockPriceBean;
-import critterrepos.beans.options.DerivativeBean;
-import critterrepos.beans.options.DerivativePriceBean;
+import critterrepos.beans.options.StockOptionBean;
+import critterrepos.beans.options.StockOptionPriceBean;
 import nordnet.downloader.NordnetRedis;
 import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
-import nordnet.html.DerivativesEnum;
+import nordnet.html.StockOptionEnum;
 import nordnet.html.Util;
 import oahu.dto.Tuple;
-import oahu.financial.Derivative;
-import oahu.financial.DerivativePrice;
-import oahu.financial.Stock;
-import oahu.financial.StockPrice;
+import oahu.financial.*;
 import oahu.financial.html.EtradeDownloader;
 import oahu.financial.repository.EtradeRepository;
 import oahu.financial.repository.StockMarketRepository;
@@ -24,15 +21,13 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static nordnet.html.DerivativesEnum.*;
-import static nordnet.html.DerivativesStringEnum.INPUT_LABEL_CLASS;
+import static nordnet.html.StockOptionEnum.*;
+import static nordnet.html.StockOptionStringEnum.INPUT_LABEL_CLASS;
 
 @Component
 public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
@@ -41,8 +36,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private LocalDate currentDate = LocalDate.now();
 
     private String storePath;
+    private OptionCalculator optionCalculator;
 
-    private Map<String,Double> openingPrices;
     //private String openingPricesFileName;
 
     //private List<StockPrice> openingPrices = new ArrayList<>();
@@ -50,7 +45,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     private NordnetRedis nordnetRedis;
 
     @Override
-    public Optional<DerivativePrice> findDerivativePrice(Tuple<String> optionInfo) {
+    public Optional<StockOptionPrice> findDerivativePrice(Tuple<String> optionInfo) {
         return Optional.empty();
     }
 
@@ -74,11 +69,17 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
 
     @Override
-    public Collection<DerivativePrice> puts(String ticker) {
+    public Collection<StockOptionPrice> puts(String ticker) {
         try {
             Document doc = getDocument(new TickerInfo(ticker));
             Stock stock = stockMarketRepos.findStock(ticker);
-            return createDerivatives(doc,stock).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.PUT).collect(Collectors.toList());
+            Optional<StockPrice> stockPrice = createStockPrice(doc, stock);
+            if (stockPrice.isPresent()) {
+                return createDerivatives(doc,stock,stockPrice.get()).stream().filter(d -> d.getDerivative().getOpType() == StockOption.OptionType.PUT).collect(Collectors.toList());
+            }
+            else {
+                throw new RuntimeException("[EtradeRepositoryImpl.calls] stockPrice is null");
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();
@@ -86,17 +87,23 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
 
     @Override
-    public Collection<DerivativePrice> puts(int oid) {
+    public Collection<StockOptionPrice> puts(int oid) {
         String ticker = stockMarketRepos.getTickerFor(oid);
         return puts(ticker);
     }
 
     @Override
-    public Collection<DerivativePrice> calls(String ticker) {
+    public Collection<StockOptionPrice> calls(String ticker) {
         try {
             Document doc = getDocument(new TickerInfo(ticker));
             Stock stock = stockMarketRepos.findStock(ticker);
-            return createDerivatives(doc,stock).stream().filter(d -> d.getDerivative().getOpType() == Derivative.OptionType.CALL).collect(Collectors.toList());
+            Optional<StockPrice> stockPrice = createStockPrice(doc, stock);
+            if (stockPrice.isPresent()) {
+                return createDerivatives(doc,stock,stockPrice.get()).stream().filter(d -> d.getDerivative().getOpType() == StockOption.OptionType.CALL).collect(Collectors.toList());
+            }
+            else {
+                throw new RuntimeException("[EtradeRepositoryImpl.calls] stockPrice is null");
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();
@@ -104,19 +111,19 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
 
     @Override
-    public Collection<DerivativePrice> calls(int oid) {
+    public Collection<StockOptionPrice> calls(int oid) {
         String ticker = stockMarketRepos.getTickerFor(oid);
         return calls(ticker);
     }
 
     @Override
-    public Collection<Derivative> callPutDefs(int oid) {
+    public Collection<StockOption> callPutDefs(int oid) {
         String ticker = stockMarketRepos.getTickerFor(oid);
         return callPutDefs(ticker);
     }
 
     @Override
-    public Collection<Derivative> callPutDefs(String ticker) {
+    public Collection<StockOption> callPutDefs(String ticker) {
         try {
             Document doc = getDocument(new TickerInfo(ticker));
             return createDefs(doc);
@@ -183,7 +190,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
         }
         else {
-            openingPrices = mapOpeningPrices(prices);
+            Map<String, Double> openingPrices = mapOpeningPrices(prices);
         }
     }
 
@@ -197,23 +204,23 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
     }
 
     private double fetchOpeningPrice(String ticker) {
-        return nordnetRedis.fetchPrice(currentDate, ticker);
+        return nordnetRedis.fetchPrice(ticker);
     }
 
     //-----------------------------------------------------------
     //-------------- Package/private methods --------------------
     //-----------------------------------------------------------
-    private Collection<Derivative> createDefs(Document doc) {
-        Collection<Derivative> result = new ArrayList<>();
+    private Collection<StockOption> createDefs(Document doc) {
+        Collection<StockOption> result = new ArrayList<>();
         //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
         Elements tables = doc.getElementsByTag("tbody");
         Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
         Elements rows = table2.getElementsByTag("tr");
         for (Element row : rows)  {
             Elements tds = row.getElementsByTag("td");
-            DerivativeBean d = new DerivativeBean();
-            d.setLifeCycle(Derivative.LifeCycle.FROM_HTML);
-            d.setOpType(Derivative.OptionType.CALL);
+            StockOptionBean d = new StockOptionBean();
+            d.setLifeCycle(StockOption.LifeCycle.FROM_HTML);
+            d.setOpType(StockOption.OptionType.CALL);
 
             Element ticker = tds.get(CALL_TICKER.getIndex());
             d.setTicker(ticker.text());
@@ -227,8 +234,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         return result;
     }
 
-    private Collection<DerivativePrice> createDerivatives(Document doc, Stock stock) {
-        Collection<DerivativePrice> result = new ArrayList<>();
+    private Collection<StockOptionPrice> createDerivatives(Document doc, Stock stock, StockPrice stockPrice) {
+        Collection<StockOptionPrice> result = new ArrayList<>();
         //Elements tables = doc.getElementsByClass(TABLE_CLASS.getText());
         Elements tables = doc.getElementsByTag("tbody");
         Element table2 = tables.get(TABLE_DERIVATIVES.getIndex());
@@ -245,12 +252,13 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
                 Elements tds = row.getElementsByTag("td");
 
                 //-------------------- CALLS -----------------------
-                DerivativePriceBean callPrice = new DerivativePriceBean();
-                Optional<Derivative> callDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.CALL);
+                StockOptionPriceBean callPrice = new StockOptionPriceBean();
+                Optional<StockOption> callDerivative = fetchOrCreateDerivative(tds, StockOption.OptionType.CALL);
                 callDerivative.ifPresent(cx -> {
-                    ((DerivativeBean) cx).setStock(stock);
+                    ((StockOptionBean) cx).setStock(stock);
                     //((DerivativeBean)cx).setExpiry(expiry.get());
                     callPrice.setDerivative(cx);
+                    callPrice.setStockPrice(stockPrice);
 
                     Element bid_e = tds.get(CALL_BID.getIndex());
                     double bid = Util.decimalStringToDouble(bid_e.text());
@@ -259,17 +267,18 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
                     Element ask_e = tds.get(CALL_ASK.getIndex());
                     double ask = Util.decimalStringToDouble(ask_e.text());
                     callPrice.setSell(ask);
-
+                    callPrice.setCalculator(optionCalculator);
                     result.add(callPrice);
                 });
 
                 //-------------------- PUTS -----------------------
-                DerivativePriceBean putPrice = new DerivativePriceBean();
-                Optional<Derivative> putDerivative = fetchOrCreateDerivative(tds, Derivative.OptionType.PUT);
+                StockOptionPriceBean putPrice = new StockOptionPriceBean();
+                Optional<StockOption> putDerivative = fetchOrCreateDerivative(tds, StockOption.OptionType.PUT);
                 putDerivative.ifPresent(px -> {
-                    ((DerivativeBean) px).setStock(stock);
+                    ((StockOptionBean) px).setStock(stock);
                     //((DerivativeBean)px).setExpiry(expiry.get());
                     putPrice.setDerivative(px);
+                    putPrice.setStockPrice(stockPrice);
 
                     Element bid_e = tds.get(PUT_BID.getIndex());
                     double bid = Util.decimalStringToDouble(bid_e.text());
@@ -279,6 +288,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
                     double ask = Util.decimalStringToDouble(ask_e.text());
                     putPrice.setSell(ask);
 
+                    putPrice.setCalculator(optionCalculator);
                     result.add(putPrice);
                 });
 
@@ -290,16 +300,16 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         return result;
     }
 
-    private Optional<Derivative> fetchOrCreateDerivative(Elements tds, Derivative.OptionType optionType) {
-        DerivativesEnum du = optionType == Derivative.OptionType.CALL ? CALL_TICKER : PUT_TICKER;
+    private Optional<StockOption> fetchOrCreateDerivative(Elements tds, StockOption.OptionType optionType) {
+        StockOptionEnum du = optionType == StockOption.OptionType.CALL ? CALL_TICKER : PUT_TICKER;
         Element ticker = tds.get(du.getIndex());
-        Optional<Derivative> found = stockMarketRepos.findDerivative(ticker.text());
+        Optional<StockOption> found = stockMarketRepos.findDerivative(ticker.text());
 
         if (found.isEmpty()) {
-            DerivativeBean derivative2 = new DerivativeBean();
+            StockOptionBean derivative2 = new StockOptionBean();
 
             derivative2.setTicker(ticker.text());
-            derivative2.setLifeCycle(Derivative.LifeCycle.FROM_HTML);
+            derivative2.setLifeCycle(StockOption.LifeCycle.FROM_HTML);
             derivative2.setOpType(optionType);
 
             Element xe = tds.get(X.getIndex());
@@ -356,6 +366,7 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
         result.setCls(close);
         result.setStock(stock);
         result.setVolume(1000);
+        result.setLocalDx(currentDate);
         return Optional.of(result);
     }
 
@@ -424,6 +435,10 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
 
     public void setCurrentDate(LocalDate currentDate) {
         this.currentDate = currentDate;
+    }
+
+    public void setOptionCalculator(OptionCalculator optionCalculator) {
+        this.optionCalculator = optionCalculator;
     }
     /*
     Tuple2<LocalDate, LocalTime> getTimeInfo(Element el) {

@@ -99,6 +99,9 @@ def populate_expiry(is_test, r):
     print(r.hgetall("expiry-1"))
     print(r.hgetall("expiry-2"))
 
+def populate_opening_prices(r):
+    redis_key = "openingprices"
+    r.hset(redis_key,"EQNR","131.00")
 
 # def populate(is_test, flush_all, add_tickers):
 def populate(args):
@@ -111,7 +114,10 @@ def populate(args):
         r.flushall()
     if args.add_tickers == True:
         populate_tickers(r)
-    populate_expiry(args.is_test, r)
+    if args.add_expiry == True:
+        populate_expiry(args.is_test, r)
+    if args.add_opening_prices == True:
+        populate_opening_prices(r)
 
 
 if __name__ == '__main__':
@@ -126,6 +132,12 @@ if __name__ == '__main__':
 
     parser.add_argument('--tickers', dest='add_tickers', action='store_true',
                         default=False, help='Populate tickers. default: false')
+
+    parser.add_argument('--expiry', dest='add_expiry', action='store_true',
+                        default=False, help='Populate all expiry dates. default: false')
+
+    parser.add_argument('--opening', dest='add_opening_prices', action='store_true',
+                        default=False, help='Populate opening prices. default: false')
 
     args = parser.parse_args()
     populate(args)

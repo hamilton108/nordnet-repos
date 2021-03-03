@@ -1,6 +1,6 @@
 package nordnet.html;
 
-public enum DerivativesEnum {
+public enum StockOptionEnum {
    TABLE_STOCK_PRICE(0),
    TABLE_DERIVATIVES(2),
 
@@ -20,7 +20,7 @@ public enum DerivativesEnum {
 
    private final int index;
 
-   DerivativesEnum(int index) {
+   StockOptionEnum(int index) {
       this.index = index;
    }
 

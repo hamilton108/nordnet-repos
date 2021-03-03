@@ -14,12 +14,12 @@ import java.util.function.Consumer;
 
 public class StockMarketReposStub implements StockMarketRepository {
     @Override
-    public void insertDerivative(Derivative derivative, Consumer<Exception> errorHandler) {
+    public void insertDerivative(StockOption stockOption, Consumer<Exception> errorHandler) {
 
     }
 
     @Override
-    public Optional<Derivative> findDerivative(String derivativeTicker) {
+    public Optional<StockOption> findDerivative(String derivativeTicker) {
         return Optional.empty();
     }
 
@@ -59,7 +59,7 @@ public class StockMarketReposStub implements StockMarketRepository {
     }
 
     @Override
-    public void registerOptionPurchase(DerivativePrice purchase, int purchaseType, int volume) {
+    public void registerOptionPurchase(StockOptionPrice purchase, int purchaseType, int volume) {
 
     }
 
@@ -89,7 +89,7 @@ public class StockMarketReposStub implements StockMarketRepository {
     }
 
     @Override
-    public Collection<OptionPurchase> purchasesWithSalesAll(int purchaseType, int status, Derivative.OptionType ot) {
+    public Collection<OptionPurchase> purchasesWithSalesAll(int purchaseType, int status, StockOption.OptionType ot) {
         return null;
     }
 

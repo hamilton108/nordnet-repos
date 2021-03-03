@@ -31,6 +31,7 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
 
     compile project(':oahu')
+    compile project(':vega')
     compile project(':critter-repos')
     compile "org.slf4j:slf4j-api:$slf4jVersion"
     compile "org.jsoup:jsoup:$jsoupVersion"

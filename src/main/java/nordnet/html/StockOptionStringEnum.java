@@ -1,13 +1,13 @@
 package nordnet.html;
 
-public enum DerivativesStringEnum {
+public enum StockOptionStringEnum {
     TABLE_CLASS("c01444"),
     TD_CLASS("c01474"),
     INPUT_LABEL_CLASS("input__value-label");
 
     private final String text;
 
-    DerivativesStringEnum (String text) {
+    StockOptionStringEnum(String text) {
         this.text = text;
     }
 
