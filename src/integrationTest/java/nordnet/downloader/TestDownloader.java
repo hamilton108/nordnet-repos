@@ -1,6 +1,7 @@
 package nordnet.downloader;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -27,11 +28,13 @@ public class TestDownloader {
     }
 
     @Test
+    @Ignore
     public void test_nordnet_redis_tickers_1() {
         var urls = nordnetURL.url("YAR", LocalDate.of(2020,7,1));
         assertThat(urls.size()).isEqualTo(6);
     }
     @Test
+    @Ignore
     public void test_nordnet_redis_tickers_2() {
         var urls = nordnetURL.url("NHY", LocalDate.of(2020,8,1));
         assertThat(urls.size()).isEqualTo(8);

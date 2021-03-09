@@ -316,6 +316,8 @@ public class EtradeRepositoryImpl implements EtradeRepository<Tuple<String>> {
             double x = Util.parseExercisePrice(xe.text());
             derivative2.setX(x);
 
+            // ===>>>
+
             found = Optional.of(derivative2);
 
             /*

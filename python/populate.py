@@ -69,10 +69,26 @@ def expiry_2(is_test):
     return result
 
 
-EXPIRY_3 = {
-    "2021-12-17": 1639695600000,
-    "2022-06-17": 1655416800000
-}
+def expiry_3(is_test):
+    if is_test == True:
+        result = [
+            1618524000000,
+            1621548000000,
+            1623967200000,
+            1631829600000,
+            1639695600000,
+            1671145200000
+        ]
+    else:
+        result = [
+            1618524000000,
+            1621548000000,
+            1623967200000,
+            1631829600000,
+            1639695600000,
+            1671145200000
+        ]
+    return result
 
 
 def init_redis(db):
@@ -92,18 +108,29 @@ def populate_expiry_x(ex, index, r):
 
 
 def populate_expiry(is_test, r):
+    """
     populate_expiry_x(expiry_1(is_test), 1, r)
     populate_expiry_x(expiry_2(is_test), 2, r)
 
     print(r.hgetall("expiry"))
     print(r.hgetall("expiry-1"))
     print(r.hgetall("expiry-2"))
+    """
+    redis_key = "expiry"
+    vals = expiry_3(is_test)
+    for v in vals:
+        r.sadd(redis_key, v)
+    print(r.smembers(redis_key))
+
 
 def populate_opening_prices(r):
     redis_key = "openingprices"
-    r.hset(redis_key,"EQNR","131.00")
+    r.hset(redis_key, "EQNR", "131.00")
+
 
 # def populate(is_test, flush_all, add_tickers):
+
+
 def populate(args):
     if args.is_test == True:
         db = 5
@@ -112,8 +139,10 @@ def populate(args):
     r = init_redis(db)
     if args.flush_all == True:
         r.flushall()
+    """
     if args.add_tickers == True:
         populate_tickers(r)
+    """
     if args.add_expiry == True:
         populate_expiry(args.is_test, r)
     if args.add_opening_prices == True:

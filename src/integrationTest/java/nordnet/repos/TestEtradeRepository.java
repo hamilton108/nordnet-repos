@@ -105,6 +105,7 @@ public class TestEtradeRepository {
      */
 
     @Test
+    @Ignore
     public void test_opening_prices_in_redis() {
         repos.setNordnetRedis(getNordnetRedis());
         repos.setCurrentDate(LocalDate.of(2020,10,5));
@@ -151,6 +152,7 @@ public class TestEtradeRepository {
     }
 
     @Test
+    @Ignore
     public void testCalls() {
         var blackScholes = new BlackScholes();
         repos.setOptionCalculator(blackScholes);
@@ -177,6 +179,7 @@ public class TestEtradeRepository {
     }
 
     @Test
+    @Ignore
     public void testPuts() {
         Collection<StockOptionPrice> puts = repos.puts(2);
         assertThat(puts.size()).isEqualTo(5);
