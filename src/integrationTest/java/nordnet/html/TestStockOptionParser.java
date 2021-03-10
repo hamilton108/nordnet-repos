@@ -22,8 +22,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static oahu.financial.StockOption.OptionType;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.offset;
 
 @RunWith(SpringRunner.class)
@@ -78,6 +78,21 @@ public class TestStockOptionParser {
         assertThat(sp.getLo()).isEqualTo(130.80);
         assertThat(sp.getCls()).isEqualTo(132.3);
     }
+
+    /*
+    @Test
+    public void testCallPutDefs() {
+        Collection<StockOption> defs = stockOptionParser.callPutDefs(2);
+        assertThat(defs.size()).as("defs.size").isEqualTo(22);
+
+        String ticker = "EQNR0K117.50"; //"EQNR9L160";
+        Optional<StockOption> def = defs.stream().filter(x -> x.getTicker().equals(ticker)).findAny();
+        assertThat(def).isNotEmpty();
+        def.ifPresent(s -> {
+            assertThat(s.getX()).as(String.format("%s.getX",ticker)).isEqualTo(117.50);
+        });
+    }
+     */
 
     @Test
     public void test_option_prices() {

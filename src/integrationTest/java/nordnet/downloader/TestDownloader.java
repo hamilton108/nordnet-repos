@@ -28,15 +28,17 @@ public class TestDownloader {
     }
 
     @Test
-    @Ignore
-    public void test_nordnet_redis_tickers_1() {
+    public void test_nordnet_redis_urls() {
         var urls = nordnetURL.url("YAR", LocalDate.of(2020,7,1));
         assertThat(urls.size()).isEqualTo(6);
-    }
-    @Test
-    @Ignore
-    public void test_nordnet_redis_tickers_2() {
-        var urls = nordnetURL.url("NHY", LocalDate.of(2020,8,1));
-        assertThat(urls.size()).isEqualTo(8);
+
+        urls = nordnetURL.url("YAR", LocalDate.of(2021,4,16));
+        assertThat(urls.size()).isEqualTo(6);
+
+        urls = nordnetURL.url("YAR", LocalDate.of(2021,5,21));
+        assertThat(urls.size()).isEqualTo(5);
+
+        urls = nordnetURL.url("YAR", LocalDate.of(2021,5,22));
+        assertThat(urls.size()).isEqualTo(4);
     }
 }

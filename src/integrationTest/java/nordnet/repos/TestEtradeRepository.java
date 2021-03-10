@@ -121,6 +121,7 @@ public class TestEtradeRepository {
     }
 
     @Test
+    @Ignore
     public void test_opening_prices_lacking_in_redis() {
         var nordnetRedis = new NordnetRedis("172.20.1.2", 5);
         repos.setNordnetRedis(nordnetRedis);
@@ -129,6 +130,7 @@ public class TestEtradeRepository {
     }
     
     @Test
+    @Ignore
     public void testCallPutDefs() {
         Collection<StockOption> defs = repos.callPutDefs(2);
         assertThat(defs.size()).as("defs.size").isEqualTo(22);
@@ -143,6 +145,7 @@ public class TestEtradeRepository {
 
 
     @Test
+    @Ignore
     public void testParse_X_price() {
         double x = Util.parseExercisePrice("175 175,00");
         assertThat(x).isEqualTo(175.00);

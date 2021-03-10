@@ -5,15 +5,18 @@ import redis.clients.jedis.Jedis;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.*;
 
 public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
 
+    private final ZoneId EUROPE_OSLO = ZoneId.of("Europe/Oslo");
     private final String host;
     private final int port;
     private final int db;
+    //private final int
     //private final URL baseURL;
 
     public NordnetRedis(String host, int port, int db) {
@@ -29,7 +32,6 @@ public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
         }
          */
     }
-
     public NordnetRedis(String host) {
         this(host,6379,0);
     }
@@ -64,6 +66,7 @@ public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
         return jedis;
     }
 
+    /*
     private List<URLInfo> tickerCategoryX(String ticker, LocalDate currentDate, String redisKey, Jedis jedis) {
         List<URLInfo> result = new ArrayList<>();
         Map<String,String>  exipiry = jedis.hgetAll(redisKey);
@@ -86,15 +89,35 @@ public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
         expiry_1.addAll(expiry_2);
         return  expiry_1;
     }
-    private List<URLInfo> tickerCategory3() {
-        return new ArrayList<>();
-    }
+     */
+
     @Override
     public List<URLInfo> url(String ticker, LocalDate currentDate) {
+
+        LocalDateTime tm = currentDate.atStartOfDay();
+
+        var utc =
+                tm.atZone(EUROPE_OSLO).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime().toInstant(ZoneOffset.UTC);
+
+        var nordnetMillis = utc.getEpochSecond() * 1000;
+
+        List<URLInfo> result = new ArrayList<>();
+
         var jedis = getJedis();
 
-        Map<String,String> expiry = jedis.hgetAll("expiry");
+        Set<String> expiry = jedis.smembers("expiry");
 
+        for (var e : expiry) {
+            var eI = Long.parseLong(e);
+            if (eI < nordnetMillis) {
+                continue;
+            }
+            var edUrl = urlFor(ticker, e);
+            result.add(new URLInfo(edUrl.toString(),e));
+        }
+
+        return result;
+        /*
         String tickerClass = expiry.get(ticker);
 
         switch (tickerClass) {
@@ -106,7 +129,8 @@ public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
                 return tickerCategory3();
         }
 
-        return new ArrayList<>();
+         */
+
     }
 
     /******************************************************************
