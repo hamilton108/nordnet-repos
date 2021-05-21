@@ -1,6 +1,7 @@
 package nordnet.downloader;
 
 import com.gargoylesoftware.htmlunit.Page;
+import nordnet.redis.NordnetRedis;
 import oahu.financial.html.EtradeDownloader;
 import oahu.financial.html.WebClientManager;
 

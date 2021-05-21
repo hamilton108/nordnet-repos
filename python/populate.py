@@ -130,6 +130,10 @@ def populate_opening_prices(r):
 
 # def populate(is_test, flush_all, add_tickers):
 
+def populate_splu(r):
+    redis_key = "splu"
+    r.hset(redis_key, "EQNR", "1620594773")
+
 
 def populate(args):
     if args.is_test == True:
@@ -147,6 +151,8 @@ def populate(args):
         populate_expiry(args.is_test, r)
     if args.add_opening_prices == True:
         populate_opening_prices(r)
+    if args.add_splu == True:
+        populate_splu(r)
 
 
 if __name__ == '__main__':
@@ -167,6 +173,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--opening', dest='add_opening_prices', action='store_true',
                         default=False, help='Populate opening prices. default: false')
+
+    parser.add_argument('--opening', dest='add_splu', action='store_true',
+                        default=False, help='Populate splu (stockprices last updated). default: false')
 
     args = parser.parse_args()
     populate(args)

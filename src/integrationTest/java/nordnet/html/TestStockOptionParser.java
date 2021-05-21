@@ -3,7 +3,7 @@ package nordnet.html;
 import critterrepos.beans.options.StockOptionBean;
 import critterrepos.utils.StockOptionUtils;
 import nordnet.downloader.DownloaderStub;
-import nordnet.downloader.NordnetRedis;
+import nordnet.redis.NordnetRedis;
 import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import nordnet.repos.StockMarketReposStub;
@@ -34,7 +34,7 @@ public class TestStockOptionParser {
     private StockOptionParser stockOptionParser;
     private EtradeDownloader<PageInfo, TickerInfo, Serializable> downloader;
     private final TickerInfo tickerInfo = new TickerInfo("EQNR");
-    private final StockOptionUtils stockOptionUtils = new StockOptionUtils();
+    private final StockOptionUtils stockOptionUtils = new StockOptionUtils(currentDate);
 
     @Before
     public void init() {
@@ -42,7 +42,7 @@ public class TestStockOptionParser {
         downloader = new DownloaderStub(storePath);
         OptionCalculator optionCalculator = new BlackScholes();
         NordnetRedis nordnetRedis = new NordnetRedis("172.20.1.2", 5);
-        stockOptionParser = new StockOptionParser(currentDate,
+        stockOptionParser = new StockOptionParser(
                 optionCalculator,
                 nordnetRedis,
                 stockMarketRepos,
@@ -112,7 +112,7 @@ public class TestStockOptionParser {
 
         call.ifPresent( c -> {
             StockOptionBean d = (StockOptionBean)c.getDerivative();
-            d.setCurrentDate(currentDate); //LocalDate.of(2020,9,22));
+            //d.setCurrentDate(currentDate); //LocalDate.of(2020,9,22));
             assertThat(d.getStock()).isNotNull();
             assertThat(d).isNotNull();
             assertThat(d.getOpType()).isEqualTo(StockOption.OptionType.CALL);

@@ -4,7 +4,7 @@ import critterrepos.beans.StockPriceBean;
 import critterrepos.beans.options.StockOptionBean;
 import critterrepos.beans.options.StockOptionPriceBean;
 import critterrepos.utils.StockOptionUtils;
-import nordnet.downloader.NordnetRedis;
+import nordnet.redis.NordnetRedis;
 import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import oahu.financial.*;
@@ -15,7 +15,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
@@ -27,18 +26,15 @@ import static oahu.financial.StockOption.OptionType.CALL;
 import static oahu.financial.StockOption.OptionType.PUT;
 
 public class StockOptionParser {
-    private final LocalDate currentDate;
     private final OptionCalculator optionCalculator;
     private final NordnetRedis nordnetRedis;
     private final StockMarketRepository stockMarketRepos;
     private final StockOptionUtils stockOptionUtils;
 
-    StockOptionParser(LocalDate currentDate,
-                      OptionCalculator optionCalculator,
+    public StockOptionParser(OptionCalculator optionCalculator,
                       NordnetRedis nordnetRedis,
                       StockMarketRepository stockMarketRepos,
                       StockOptionUtils stockOptionUtils) {
-        this.currentDate = currentDate;
         this.optionCalculator = optionCalculator;
         this.nordnetRedis = nordnetRedis;
         this.stockMarketRepos = stockMarketRepos;
@@ -69,7 +65,7 @@ public class StockOptionParser {
         result.setCls(close);
         result.setStock(stock);
         result.setVolume(1000);
-        result.setLocalDx(currentDate);
+        result.setLocalDx(stockOptionUtils.getCurrentDate());
         return Optional.of(result);
     }
 

@@ -1,5 +1,8 @@
-package nordnet.downloader;
+package nordnet.redis;
 
+import nordnet.downloader.NordnetURL;
+import nordnet.financial.OpeningPrices;
+import nordnet.downloader.URLInfo;
 import redis.clients.jedis.Jedis;
 
 import java.net.MalformedURLException;
@@ -91,6 +94,20 @@ public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
     }
      */
 
+    public long getLastUpdateTimeStockPrices(String ticker) {
+        var jedis = getJedis();
+        var tm = jedis.hget("splu", ticker);
+        if (tm == null) {
+            return -1;
+        }
+        try {
+            return Long.parseLong(tm);
+        }
+        catch (NumberFormatException ex) {
+            return -1;
+        }
+    }
+
     @Override
     public List<URLInfo> url(String ticker, LocalDate currentDate) {
 
@@ -136,32 +153,6 @@ public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
     /******************************************************************
     ********************* Interface OpeningPrices *********************
     ******************************************************************/
-    @Override
-    public void savePrices(LocalDate curDate, Map<String, String> prices) {
-        var jedis = getJedis();
-        jedis.hset(redisKey(curDate), prices);
-    }
-
-    @Override
-    public Map<String, String> fetchPrices(LocalDate curDate) {
-        var jedis = getJedis();
-        return jedis.hgetAll(redisKey(curDate));
-
-        /*
-        var jedisResult = jedis.hgetAll(key);
-        for (Map.Entry<String,String> items = jedisResult.entrySet()) {
-
-        }
-         */
-    }
-
-    @Override
-    public double fetchPrice(LocalDate curDate, String ticker) {
-        var jedis = getJedis();
-        var hashKey= redisKey(curDate);
-        String priceS = jedis.hget(hashKey, ticker);
-        return Double.parseDouble(priceS);
-    }
 
     @Override
     public double fetchPrice(String ticker) {
@@ -170,13 +161,13 @@ public class NordnetRedis implements NordnetURL<URLInfo>, OpeningPrices {
         return Double.parseDouble(priceS);
     }
 
+    /*
     private String redisKey(LocalDate curDate) {
         return String.format("%d-%d-%d",
                 curDate.getYear(),
                 curDate.getMonth().getValue(),
                 curDate.getDayOfMonth());
     }
-    /*
     private List<String> withConnection(Function<StatefulRedisConnection<String,String>,List<String>> fn) {
         var uri = RedisURI.Builder.redis(host, port).withDatabase(db).build();
         var client = RedisClient.create(uri);
