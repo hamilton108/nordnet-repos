@@ -174,7 +174,7 @@ if __name__ == '__main__':
     parser.add_argument('--opening', dest='add_opening_prices', action='store_true',
                         default=False, help='Populate opening prices. default: false')
 
-    parser.add_argument('--opening', dest='add_splu', action='store_true',
+    parser.add_argument('--splu', dest='add_splu', action='store_true',
                         default=False, help='Populate splu (stockprices last updated). default: false')
 
     args = parser.parse_args()
