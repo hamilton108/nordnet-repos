@@ -12,6 +12,7 @@ import oahu.financial.StockOption;
 import oahu.financial.StockOptionPrice;
 import oahu.financial.html.EtradeDownloader;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -27,11 +28,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.offset;
 
 @RunWith(SpringRunner.class)
-public class TestStockOptionParser {
+public class TestStockOptionParser1 {
 
     private final LocalDate currentDate = LocalDate.of(2020,9,22);
     private static final String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
-    private StockOptionParser stockOptionParser;
+    private StockOptionParser1 stockOptionParser1;
     private EtradeDownloader<PageInfo, TickerInfo, Serializable> downloader;
     private final TickerInfo tickerInfo = new TickerInfo("EQNR");
     private final StockOptionUtils stockOptionUtils = new StockOptionUtils(currentDate);
@@ -42,13 +43,14 @@ public class TestStockOptionParser {
         downloader = new DownloaderStub(storePath);
         OptionCalculator optionCalculator = new BlackScholes();
         NordnetRedis nordnetRedis = new NordnetRedis("172.20.1.2", 5);
-        stockOptionParser = new StockOptionParser(
+        stockOptionParser1 = new StockOptionParser1(
                 optionCalculator,
                 nordnetRedis,
                 stockMarketRepos,
                 stockOptionUtils);
     }
 
+    @Ignore
     @Test
     public void test_stockoption() {
         StockOption eqnr = createStockOption("EQNR0K120");
@@ -66,9 +68,10 @@ public class TestStockOptionParser {
                 );
     }
 
+    @Ignore
     @Test
     public void test_stockprice() {
-        var stockPrice = stockOptionParser.stockPrice(tickerInfo, getPage());
+        var stockPrice = stockOptionParser1.stockPrice(tickerInfo, getPage());
         assertThat(stockPrice).isNotEmpty();
         var sp = stockPrice.get();
         assertThat(sp.getStock()).isNotNull();
@@ -94,15 +97,16 @@ public class TestStockOptionParser {
     }
      */
 
+    @Ignore
     @Test
     public void test_option_prices() {
         var page = getPage();
-        var stockPrice = stockOptionParser.stockPrice(tickerInfo, page);
+        var stockPrice = stockOptionParser1.stockPrice(tickerInfo, page);
         assertThat(stockPrice).isNotEmpty();
-        var options = stockOptionParser.options(page, stockPrice.get());
+        var options = stockOptionParser1.options(page, stockPrice.get());
         assertThat(options.size()).isEqualTo(10);
 
-        var calls = stockOptionParser.calls(options);
+        var calls = stockOptionParser1.calls(options);
 
         assertThat(calls.size()).isEqualTo(5);
 
@@ -130,7 +134,7 @@ public class TestStockOptionParser {
             assertThat(c.optionPriceFor(138.0)).as("Option price for").isCloseTo(14.45, offset(0.05));
         });
 
-        var puts = stockOptionParser.puts(options);
+        var puts = stockOptionParser1.puts(options);
         String putTicker = "EQNR0W125";
         Optional<StockOptionPrice> put = puts.stream().filter(x -> x.getTicker().equals(putTicker)).findAny();
         assertThat(put).isNotEmpty();
@@ -147,6 +151,7 @@ public class TestStockOptionParser {
         });
     }
 
+    @Ignore
     @Test
     public void testParse_X_price() {
         double x = Util.parseExercisePrice("175 175,00");

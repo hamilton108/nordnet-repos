@@ -15,10 +15,15 @@ public class DownloaderStub implements EtradeDownloader<PageInfo, TickerInfo, Se
     private String storePath;
     private HashMap<String,Integer> counterMap;
     private boolean applyCounter = false;
+    private int htmlIndex;
 
-    public DownloaderStub(String storePath) {
+    public DownloaderStub(String storePath, int htmlIndex) {
         this();
         this.storePath = storePath;
+        this.htmlIndex = htmlIndex;
+    }
+    public DownloaderStub(String storePath) {
+        this(storePath, 0);
     }
     public DownloaderStub() {
         webClient = new WebClient();
@@ -47,8 +52,11 @@ public class DownloaderStub implements EtradeDownloader<PageInfo, TickerInfo, Se
         if (applyCounter) {
             return String.format("file:///%s/%s-%d.html", storePath, ticker, getCounter(ticker));
         }
-        else {
+        else if (htmlIndex == 0){
             return String.format("file:///%s/%s.html", storePath, ticker);
+        }
+        else {
+            return String.format("file:///%s/%s-%d.html", storePath, ticker, htmlIndex);
         }
     }
     //endregion Private Methods

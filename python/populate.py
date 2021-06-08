@@ -125,7 +125,8 @@ def populate_expiry(is_test, r):
 
 def populate_opening_prices(r):
     redis_key = "openingprices"
-    r.hset(redis_key, "EQNR", "131.00")
+    #r.hset(redis_key, "EQNR", "131.00")
+    r.hset(redis_key, "EQNR", "190.00")
 
 
 # def populate(is_test, flush_all, add_tickers):

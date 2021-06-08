@@ -42,6 +42,23 @@ public class StockMarketReposStub implements StockMarketRepository {
             case "NHY": return 1;
             case "EQNR": return 2;
             case "YAR": return 3;
+            case "TEL": return 6;
+            case "ORK": return 9;
+            case "REC": return 11;
+            case "PGS": return 12;
+            case "STB": return 14;
+            case "TGS": return 16;
+            case "TOM": return 17;
+            case "AKSO": return 18;
+            case "DNB": return 19;
+            case "DNO": return 20;
+            case "GJF": return 21;
+            case "SUBC": return 23;
+            case "AKERBP": return 25;
+            case "BLWPG": return 26;
+            case "BAKKA": return 27;
+            case "GOGL": return 28;
+            case "NAS": return 29;
             default: return -1;
         }
     }
