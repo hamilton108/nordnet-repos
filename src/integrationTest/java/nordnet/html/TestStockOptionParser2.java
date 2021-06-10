@@ -62,6 +62,52 @@ public class TestStockOptionParser2 {
         assertThat(sp.getCls()).isEqualTo(190.48);
     }
 
+    @Test
+    public void test_option_prices() {
+        var page = getPage();
+        var stockPrice = stockOptionParser.stockPrice(tickerInfo, page);
+        assertThat(stockPrice).isNotEmpty();
+
+        var options = stockOptionParser.options(page, stockPrice.get());
+        assertThat(options.size()).isEqualTo(44);
+
+        String callTicker = "EQNR1F11Y175";
+        Optional<StockOptionPrice> call = options.stream().filter(x -> x.getTicker().equals(callTicker)).findAny();
+        assertThat(call).isNotEmpty();
+
+        call.ifPresent( c -> {
+            StockOptionBean d = (StockOptionBean)c.getDerivative();
+            assertThat(d).isNotNull();
+            assertThat(d.getStock()).isNotNull();
+            assertThat(d.getOpType()).isEqualTo(StockOption.OptionType.CALL);
+            assertThat(d.getX()).isEqualTo(175);
+            assertThat(d.getExpiry()).isEqualTo(LocalDate.of(2021,6,18));
+            assertThat(d.getLifeCycle()).isEqualTo(StockOption.LifeCycle.FROM_HTML);
+            assertThat(c.getStockPrice()).isNotNull();
+            assertThat(c.getBuy()).as("Bid").isEqualTo(14.5);
+            assertThat(c.getSell()).as("Ask").isEqualTo(16.25);
+            //assertThat(c.optionPriceFor(196.0)).as("Option price for").isCloseTo(16.45, offset(0.05));
+
+        });
+
+        String putTicker = "EQNR1R11Y210";
+        Optional<StockOptionPrice> put = options.stream().filter(x -> x.getTicker().equals(putTicker)).findAny();
+        assertThat(put).isNotEmpty();
+
+        put.ifPresent( c -> {
+            StockOptionBean d = (StockOptionBean)c.getDerivative();
+            assertThat(d).isNotNull();
+            assertThat(d.getStock()).isNotNull();
+            assertThat(d.getOpType()).isEqualTo(StockOption.OptionType.PUT);
+            assertThat(d.getX()).isEqualTo(210);
+            assertThat(d.getExpiry()).isEqualTo(LocalDate.of(2021,6,18));
+            assertThat(d.getLifeCycle()).isEqualTo(StockOption.LifeCycle.FROM_HTML);
+            assertThat(c.getStockPrice()).isNotNull();
+            assertThat(c.getBuy()).as("Bid").isEqualTo(18.75);
+            assertThat(c.getSell()).as("Ask").isEqualTo(20.50);
+        });
+    }
+
     /*
     @Test
     public void test_option_prices() {
