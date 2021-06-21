@@ -7,6 +7,7 @@ import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import nordnet.redis.NordnetRedis;
 import oahu.dto.Tuple;
+import oahu.exceptions.FinancialException;
 import oahu.financial.*;
 import oahu.financial.repository.StockMarketRepository;
 import org.jsoup.Jsoup;
@@ -67,7 +68,20 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
         var doc = Jsoup.parse(pageInfo.getPage().getWebResponse().getContentAsString());
         var rows = doc.select("[role=row]");
         int sz = rows.size();
-        for (int i = 3; i < sz; ++i) {
+        int optionIndex = -1;
+        for (int i = 1; i < sz; ++i) {
+            var row = rows.get(i);
+            var arias= row.select("[aria-hidden=true]");
+            if (arias.size() == 13) {
+                optionIndex = i;
+                break;
+            }
+            //System.out.println(arias.size());
+        }
+        if (optionIndex == -1) {
+            throw new FinancialException("No rows with size 13, cannot evaluate option prices");
+        }
+        for (int i = optionIndex; i < sz; ++i) {
             var row = rows.get(i);
             var arias= row.select("[aria-hidden=true]");
             var x = elementToDouble(arias.get(5));

@@ -19,6 +19,7 @@ import vega.financial.calculator.BlackScholes;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,7 +40,7 @@ public class TestStockOptionParser2 {
     @Before
     public void init() {
         StockMarketReposStub stockMarketRepos = new StockMarketReposStub();
-        downloader = new DownloaderStub(storePath, 2);
+        downloader = new DownloaderStub(storePath, 3);
         OptionCalculator optionCalculator = new BlackScholes();
         NordnetRedis nordnetRedis = new NordnetRedis("172.20.1.2", 5);
         stockOptionParser = new StockOptionParser2(
@@ -56,10 +57,10 @@ public class TestStockOptionParser2 {
         var sp = stockPrice.get();
         assertThat(sp.getStock()).isNotNull();
         assertThat(sp.getStock().getTicker()).isEqualTo("EQNR");
-        assertThat(sp.getOpn()).isEqualTo(190.0);
-        assertThat(sp.getHi()).isEqualTo(191.60);
-        assertThat(sp.getLo()).isEqualTo(190.22);
-        assertThat(sp.getCls()).isEqualTo(190.48);
+        assertThat(sp.getOpn()).isEqualTo(180.0);
+        assertThat(sp.getHi()).isEqualTo(180.36);
+        assertThat(sp.getLo()).isEqualTo(174.56);
+        assertThat(sp.getCls()).isEqualTo(175.56);
     }
 
     @Test
@@ -69,42 +70,39 @@ public class TestStockOptionParser2 {
         assertThat(stockPrice).isNotEmpty();
 
         var options = stockOptionParser.options(page, stockPrice.get());
-        assertThat(options.size()).isEqualTo(44);
+        assertThat(options.size()).isEqualTo(66);
 
-        String callTicker = "EQNR1F11Y175";
-        Optional<StockOptionPrice> call = options.stream().filter(x -> x.getTicker().equals(callTicker)).findAny();
-        assertThat(call).isNotEmpty();
+        testOption(options, "EQNR1L320", OptionType.CALL,320,0.01, 1.20);
+        testOption(options, "EQNR1X320", OptionType.PUT,320,143.50, 149.50);
 
-        call.ifPresent( c -> {
-            StockOptionBean d = (StockOptionBean)c.getDerivative();
+        testOption(options, "EQNR1L170", OptionType.CALL,170,14.25, 16.75);
+        testOption(options, "EQNR1X170", OptionType.PUT,170,10.75, 12.75);
+
+        testOption(options, "EQNR1L58", OptionType.CALL,58,114.50, 120.50);
+        testOption(options, "EQNR1X58", OptionType.PUT,58,0.00, 1.20);
+    }
+
+    private void testOption(Collection<StockOptionPrice> options,
+                            String ticker,
+                            OptionType optionType,
+                            double strike,
+                            double bid,
+                            double ask) {
+        Optional<StockOptionPrice> option = options.stream().filter(x -> x.getTicker().equals(ticker)).findAny();
+        assertThat(option).isNotEmpty();
+
+        option.ifPresent(c -> {
+            StockOptionBean d = (StockOptionBean) c.getDerivative();
             assertThat(d).isNotNull();
             assertThat(d.getStock()).isNotNull();
-            assertThat(d.getOpType()).isEqualTo(StockOption.OptionType.CALL);
-            assertThat(d.getX()).isEqualTo(175);
-            assertThat(d.getExpiry()).isEqualTo(LocalDate.of(2021,6,18));
+            assertThat(d.getOpType()).isEqualTo(optionType);
+            assertThat(d.getX()).isEqualTo(strike);
+            assertThat(d.getExpiry()).isEqualTo(LocalDate.of(2021, 12, 17));
             assertThat(d.getLifeCycle()).isEqualTo(StockOption.LifeCycle.FROM_HTML);
             assertThat(c.getStockPrice()).isNotNull();
-            assertThat(c.getBuy()).as("Bid").isEqualTo(14.5);
-            assertThat(c.getSell()).as("Ask").isEqualTo(16.25);
+            assertThat(c.getBuy()).as("Bid").isEqualTo(bid);
+            assertThat(c.getSell()).as("Ask").isEqualTo(ask);
             //assertThat(c.optionPriceFor(196.0)).as("Option price for").isCloseTo(16.45, offset(0.05));
-
-        });
-
-        String putTicker = "EQNR1R11Y210";
-        Optional<StockOptionPrice> put = options.stream().filter(x -> x.getTicker().equals(putTicker)).findAny();
-        assertThat(put).isNotEmpty();
-
-        put.ifPresent( c -> {
-            StockOptionBean d = (StockOptionBean)c.getDerivative();
-            assertThat(d).isNotNull();
-            assertThat(d.getStock()).isNotNull();
-            assertThat(d.getOpType()).isEqualTo(StockOption.OptionType.PUT);
-            assertThat(d.getX()).isEqualTo(210);
-            assertThat(d.getExpiry()).isEqualTo(LocalDate.of(2021,6,18));
-            assertThat(d.getLifeCycle()).isEqualTo(StockOption.LifeCycle.FROM_HTML);
-            assertThat(c.getStockPrice()).isNotNull();
-            assertThat(c.getBuy()).as("Bid").isEqualTo(18.75);
-            assertThat(c.getSell()).as("Ask").isEqualTo(20.50);
         });
     }
 

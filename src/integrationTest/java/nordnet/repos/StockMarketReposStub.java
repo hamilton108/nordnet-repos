@@ -29,6 +29,11 @@ public class StockMarketReposStub implements StockMarketRepository {
     }
 
     @Override
+    public Stock findStock(int oid) {
+        return null;
+    }
+
+    @Override
     public Collection<Stock> getStocks() {
         Collection<Stock> result = new ArrayList<>();
         result.add(createStock(1, "NHY"));
@@ -72,6 +77,11 @@ public class StockMarketReposStub implements StockMarketRepository {
 
     @Override
     public Collection<StockPrice> findStockPrices(String ticker, LocalDate fromDx) {
+        return null;
+    }
+
+    @Override
+    public Collection<StockPrice> findStockPrices(int oid, LocalDate fromDx) {
         return null;
     }
 
