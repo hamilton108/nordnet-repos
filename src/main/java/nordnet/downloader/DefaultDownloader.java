@@ -16,8 +16,12 @@ public class DefaultDownloader implements EtradeDownloader<PageInfo, TickerInfo,
     private Consumer<PageInfo> onPageDownloaded;
 
     public DefaultDownloader(String host, int port, int db) {
-        this.webClientManager = new WebClientManagerImpl();
+        this(host,port,db,new WebClientManagerImpl());
+    }
+
+    public DefaultDownloader(String host, int port, int db, WebClientManager<Page> webClientManager) {
         this.nordnetURL = new NordnetRedis(host,port,db);
+        this.webClientManager = webClientManager;
     }
 
     @Override
