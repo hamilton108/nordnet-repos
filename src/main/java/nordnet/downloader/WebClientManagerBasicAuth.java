@@ -13,6 +13,9 @@ import java.util.Base64;
 import java.util.Optional;
 
 public class WebClientManagerBasicAuth implements WebClientManager<HttpResponse<String>> {
+
+    // https://www.nordnet.no/api/2/login
+
     HttpClient httpClient;
     //Authenticator authenticator;
     String base64encodedUserPwd;

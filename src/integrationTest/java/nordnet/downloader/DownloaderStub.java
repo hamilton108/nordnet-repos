@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class DownloaderStub implements EtradeDownloader<PageInfo, TickerInfo, Serializable> {
+public class DownloaderStub implements EtradeDownloader<List<PageInfo>, TickerInfo, Serializable> {
     private boolean javaScriptEnabled = false;
     private final WebClient webClient;
     private String storePath;

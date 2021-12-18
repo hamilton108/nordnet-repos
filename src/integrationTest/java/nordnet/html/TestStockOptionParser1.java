@@ -33,7 +33,7 @@ public class TestStockOptionParser1 {
     private final LocalDate currentDate = LocalDate.of(2020,9,22);
     private static final String storePath = "/home/rcs/opt/java/nordnet-repos/src/integrationTest/resources/html/derivatives";
     private StockOptionParser1 stockOptionParser1;
-    private EtradeDownloader<PageInfo, TickerInfo, Serializable> downloader;
+    private EtradeDownloader<List<PageInfo>, TickerInfo, Serializable> downloader;
     private final TickerInfo tickerInfo = new TickerInfo("EQNR");
     private final StockOptionUtils stockOptionUtils = new StockOptionUtils(currentDate);
 

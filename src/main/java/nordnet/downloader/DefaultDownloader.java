@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class DefaultDownloader implements EtradeDownloader<PageInfo, TickerInfo, Serializable> {
+public class DefaultDownloader implements EtradeDownloader<List<PageInfo>, TickerInfo, Serializable> {
     private final WebClientManager<Page> webClientManager;
     private final NordnetURL<URLInfo> nordnetURL;
     private Consumer<PageInfo> onPageDownloaded;
