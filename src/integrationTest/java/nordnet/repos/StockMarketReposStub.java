@@ -13,8 +13,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class StockMarketReposStub implements StockMarketRepository {
+
     @Override
-    public void insertDerivative(StockOption stockOption, Consumer<Exception> errorHandler) {
+    public void insertDerivative(StockOption stockOption) {
 
     }
 
@@ -128,5 +129,10 @@ public class StockMarketReposStub implements StockMarketRepository {
             case 3: return "YAR";
             default: return "";
         }
+    }
+
+    @Override
+    public List<OptionPurchase> activePurchasesWithCritters(int purchaseType) {
+        return null;
     }
 }
