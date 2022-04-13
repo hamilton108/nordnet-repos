@@ -30,15 +30,15 @@ public class TestDownloader {
     @Test
     public void test_nordnet_redis_urls() {
         var urls = nordnetURL.url("YAR", LocalDate.of(2020,7,1));
-        assertThat(urls.size()).isEqualTo(6);
+        assertThat(urls.size()).isEqualTo(10);
 
         urls = nordnetURL.url("YAR", LocalDate.of(2021,4,16));
-        assertThat(urls.size()).isEqualTo(6);
+        assertThat(urls.size()).isEqualTo(10);
 
         urls = nordnetURL.url("YAR", LocalDate.of(2021,5,21));
-        assertThat(urls.size()).isEqualTo(5);
+        assertThat(urls.size()).isEqualTo(9);
 
         urls = nordnetURL.url("YAR", LocalDate.of(2021,5,22));
-        assertThat(urls.size()).isEqualTo(4);
+        assertThat(urls.size()).isEqualTo(8);
     }
 }

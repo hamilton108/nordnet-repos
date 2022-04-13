@@ -1,29 +1,28 @@
 package nordnet.html;
 
-import critterrepos.beans.StockPriceBean;
-import critterrepos.utils.StockOptionUtils;
-import oahu.financial.Stock;
-import oahu.financial.StockPrice;
+import critter.stock.Stock;
+import critter.stock.StockPrice;
+import critter.util.StockOptionUtil;
 
 public abstract class StockOptionParserBase {
-    protected final StockOptionUtils stockOptionUtils;
+    protected final StockOptionUtil stockOptionUtil;
 
-    public StockOptionParserBase(StockOptionUtils stockOptionUtils) {
-        this.stockOptionUtils = stockOptionUtils;
+    public StockOptionParserBase(StockOptionUtil stockOptionUtil) {
+        this.stockOptionUtil = stockOptionUtil;
     }
     protected StockPrice createStockPrice(double opn,
                                           double hi,
                                           double lo,
                                           double cls,
                                           Stock stock) {
-        StockPriceBean result = new StockPriceBean();
+        StockPrice result = new StockPrice();
         result.setOpn(opn);
         result.setHi(hi);
         result.setLo(lo);
         result.setCls(cls);
         result.setStock(stock);
         result.setVolume(1000);
-        result.setLocalDx(stockOptionUtils.getCurrentDate());
+        result.setLocalDx(stockOptionUtil.getCurrentDate());
         return result;
     }
 }

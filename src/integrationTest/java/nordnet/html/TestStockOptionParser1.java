@@ -1,15 +1,13 @@
 package nordnet.html;
 
-import critterrepos.beans.options.StockOptionBean;
-import critterrepos.utils.StockOptionUtils;
+import critter.stockoption.StockOption;
+import critter.stockoption.StockOptionPrice;
+import critter.util.StockOptionUtil;
 import nordnet.downloader.DownloaderStub;
 import nordnet.redis.NordnetRedis;
 import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import nordnet.repos.StockMarketReposStub;
-import oahu.financial.OptionCalculator;
-import oahu.financial.StockOption;
-import oahu.financial.StockOptionPrice;
 import oahu.financial.html.EtradeDownloader;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -17,13 +15,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 import vega.financial.calculator.BlackScholes;
+import vega.financial.calculator.OptionCalculator;
 
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static oahu.financial.StockOption.OptionType;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.offset;
 
@@ -35,7 +33,7 @@ public class TestStockOptionParser1 {
     private StockOptionParser1 stockOptionParser1;
     private EtradeDownloader<List<PageInfo>, TickerInfo, Serializable> downloader;
     private final TickerInfo tickerInfo = new TickerInfo("EQNR");
-    private final StockOptionUtils stockOptionUtils = new StockOptionUtils(currentDate);
+    private final StockOptionUtil stockOptionUtils = new StockOptionUtil(currentDate);
 
     @Before
     public void init() {
@@ -59,9 +57,9 @@ public class TestStockOptionParser1 {
         assertThat(eqnr2.getExpiry()).isEqualTo(LocalDate.of(2020,11, 20));
     }
 
-    private StockOptionBean createStockOption(String ticker) {
-        return new StockOptionBean(ticker,
-                OptionType.CALL,
+    private StockOption createStockOption(String ticker) {
+        return new StockOption(ticker,
+                vega.financial.StockOption.OptionType.CALL,
                 120.0,
                 null,
                 stockOptionUtils
@@ -71,9 +69,9 @@ public class TestStockOptionParser1 {
     @Ignore
     @Test
     public void test_stockprice() {
-        var stockPrice = stockOptionParser1.stockPrice(tickerInfo, getPage());
-        assertThat(stockPrice).isNotEmpty();
-        var sp = stockPrice.get();
+        var sp = stockOptionParser1.stockPrice(tickerInfo, getPage());
+        //assertThat(stockPrice).isNotEmpty();
+        //var sp = stockPrice.get();
         assertThat(sp.getStock()).isNotNull();
         assertThat(sp.getStock().getTicker()).isEqualTo("EQNR");
         assertThat(sp.getOpn()).isEqualTo(131.0);
@@ -101,9 +99,10 @@ public class TestStockOptionParser1 {
     @Test
     public void test_option_prices() {
         var page = getPage();
-        var stockPrice = stockOptionParser1.stockPrice(tickerInfo, page);
-        assertThat(stockPrice).isNotEmpty();
-        var options = stockOptionParser1.options(page, stockPrice.get());
+        var sp = stockOptionParser1.stockPrice(tickerInfo, page);
+        //assertThat(stockPrice).isNotEmpty();
+        //var options = stockOptionParser1.options(page, stockPrice.get());
+        var options = stockOptionParser1.options(page, sp);
         assertThat(options.size()).isEqualTo(10);
 
         var calls = stockOptionParser1.calls(options);
@@ -115,7 +114,7 @@ public class TestStockOptionParser1 {
         assertThat(call).isNotEmpty();
 
         call.ifPresent( c -> {
-            StockOptionBean d = (StockOptionBean)c.getDerivative();
+            StockOption d = (critter.stockoption.StockOption)c.getStockOption();
             //d.setCurrentDate(currentDate); //LocalDate.of(2020,9,22));
             assertThat(d.getStock()).isNotNull();
             assertThat(d).isNotNull();
@@ -140,7 +139,7 @@ public class TestStockOptionParser1 {
         assertThat(put).isNotEmpty();
 
         put.ifPresent( c -> {
-            StockOption d = c.getDerivative();
+            StockOption d = (critter.stockoption.StockOption)c.getStockOption();
             assertThat(d).isNotNull();
             assertThat(d.getOpType()).isEqualTo(StockOption.OptionType.PUT);
             assertThat(d.getX()).isEqualTo(125);

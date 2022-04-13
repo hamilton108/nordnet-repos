@@ -1,18 +1,20 @@
 package nordnet.html;
 
-import critterrepos.beans.options.StockOptionBean;
-import critterrepos.beans.options.StockOptionPriceBean;
-import critterrepos.utils.StockOptionUtils;
+import critter.repos.StockMarketRepository;
+import critter.stock.Stock;
+import critter.stock.StockPrice;
+import critter.stockoption.StockOption;
+import critter.stockoption.StockOptionPrice;
+import critter.util.StockOptionUtil;
 import nordnet.redis.NordnetRedis;
 import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
-import oahu.financial.*;
-import oahu.financial.repository.StockMarketRepository;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
+import vega.financial.calculator.OptionCalculator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,32 +23,32 @@ import java.util.stream.Collectors;
 
 import static nordnet.html.StockOptionEnum.*;
 import static nordnet.html.StockOptionEnum.STOCK_PRICE_LO;
-import static oahu.financial.StockOption.OptionType.CALL;
-import static oahu.financial.StockOption.OptionType.PUT;
+import static vega.financial.StockOption.OptionType.CALL;
+import static vega.financial.StockOption.OptionType.PUT;
 
 public class StockOptionParser1 extends  StockOptionParserBase implements StockOptionParser {
     private final OptionCalculator optionCalculator;
     private final NordnetRedis nordnetRedis;
-    private final StockMarketRepository stockMarketRepos;
+    private final StockMarketRepository<String,String> stockMarketRepos;
 
     public StockOptionParser1(OptionCalculator optionCalculator,
                               NordnetRedis nordnetRedis,
-                              StockMarketRepository stockMarketRepos,
-                              StockOptionUtils stockOptionUtils) {
-        super(stockOptionUtils);
+                              StockMarketRepository<String,String> stockMarketRepos,
+                              StockOptionUtil stockOptionUtil) {
+        super(stockOptionUtil);
         this.optionCalculator = optionCalculator;
         this.nordnetRedis = nordnetRedis;
         this.stockMarketRepos = stockMarketRepos;
     }
 
     @Override
-    public Optional<StockPrice> stockPrice(TickerInfo tickerInfo, PageInfo pageInfo) {
+    public StockPrice stockPrice(TickerInfo tickerInfo, PageInfo pageInfo) {
         Stock stock = stockMarketRepos.findStock(tickerInfo.getTicker());
         var doc = Jsoup.parse(pageInfo.getPage().getWebResponse().getContentAsString());
         return createStockPrice(doc, stock);
     }
 
-    Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
+    StockPrice createStockPrice(Document doc, Stock stock) {
         Elements tds =  stockPriceTds(doc);
 
         double close = getLast(tds); //textNodeToDouble(stockPriceElement(tds, STOCK_PRICE_CLOSE));
@@ -57,7 +59,7 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
 
         double open = fetchOpeningPrice(stock.getTicker()); //  openingPrices.get(stock.getTicker());
         var result = createStockPrice(open, hi, lo, close, stock);
-        return Optional.of(result);
+        return result;
     }
 
     public Collection<StockOptionPrice> calls(Collection<StockOptionPrice> options) {
@@ -67,7 +69,7 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
         return callsOrPuts(options,PUT);
     }
     public Collection<StockOptionPrice> callsOrPuts(Collection<StockOptionPrice> options, StockOption.OptionType optionType) {
-        return options.stream().filter(x -> x.getDerivative().getOpType().equals(optionType)).collect(Collectors.toList());
+        return options.stream().filter(x -> x.getStockOption().getOpType().equals(optionType)).collect(Collectors.toList());
     }
 
     @Override
@@ -83,12 +85,12 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
                 Elements tds = row.getElementsByTag("td");
 
                 //-------------------- CALLS -----------------------
-                StockOptionPriceBean callPrice = new StockOptionPriceBean();
-                Optional<StockOption> callDerivative = fetchOrCreateDerivative(tds, StockOption.OptionType.CALL);
+                StockOptionPrice callPrice = new StockOptionPrice();
+                Optional<StockOption> callDerivative = fetchOrCreateDerivative(tds, CALL);
                 callDerivative.ifPresent(cx -> {
-                    ((StockOptionBean) cx).setStock(stockPrice.getStock());
+                    cx.setStock(stockPrice.getStock());
                     //((DerivativeBean)cx).setExpiry(expiry.get());
-                    callPrice.setDerivative(cx);
+                    callPrice.setStockOption(cx);
                     callPrice.setStockPrice(stockPrice);
 
                     Element bid_e = tds.get(CALL_BID.getIndex());
@@ -103,12 +105,12 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
                 });
 
                 //-------------------- PUTS -----------------------
-                StockOptionPriceBean putPrice = new StockOptionPriceBean();
-                Optional<StockOption> putDerivative = fetchOrCreateDerivative(tds, StockOption.OptionType.PUT);
+                var putPrice = new StockOptionPrice();
+                Optional<StockOption> putDerivative = fetchOrCreateDerivative(tds, PUT);
                 putDerivative.ifPresent(px -> {
-                    ((StockOptionBean) px).setStock(stockPrice.getStock());
+                    px.setStock(stockPrice.getStock());
                     //((DerivativeBean)px).setExpiry(expiry.get());
-                    putPrice.setDerivative(px);
+                    putPrice.setStockOption(px);
                     putPrice.setStockPrice(stockPrice);
 
                     Element bid_e = tds.get(PUT_BID.getIndex());
@@ -131,12 +133,12 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
         return result;
     }
     private Optional<StockOption> fetchOrCreateDerivative(Elements tds, StockOption.OptionType optionType) {
-        StockOptionEnum du = optionType == StockOption.OptionType.CALL ? CALL_TICKER : PUT_TICKER;
+        StockOptionEnum du = optionType == CALL ? CALL_TICKER : PUT_TICKER;
         Element ticker = tds.get(du.getIndex());
-        Optional<StockOption> found = stockMarketRepos.findDerivative(ticker.text());
+        Optional<StockOption> found = stockMarketRepos.findStockOption(ticker.text());
 
         if (found.isEmpty()) {
-            StockOptionBean derivative2 = new StockOptionBean();
+            var derivative2 = new StockOption();
 
             derivative2.setTicker(ticker.text());
             derivative2.setLifeCycle(StockOption.LifeCycle.FROM_HTML);
@@ -145,7 +147,7 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
             Element xe = tds.get(X.getIndex());
             double x = Util.parseExercisePrice(xe.text());
             derivative2.setX(x);
-            derivative2.setStockOptionUtils(stockOptionUtils);
+            derivative2.setStockOptionUtil(stockOptionUtil);
 
             // ===>>>
 

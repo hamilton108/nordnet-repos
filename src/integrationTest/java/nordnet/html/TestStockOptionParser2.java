@@ -1,21 +1,21 @@
 package nordnet.html;
 
-import critterrepos.beans.options.StockOptionBean;
-import critterrepos.utils.StockOptionUtils;
+import critter.stockoption.StockOption;
+import critter.stockoption.StockOptionPrice;
+import critter.util.StockOptionUtil;
 import nordnet.downloader.DownloaderStub;
 import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import nordnet.redis.NordnetRedis;
 import nordnet.repos.StockMarketReposStub;
-import oahu.financial.OptionCalculator;
-import oahu.financial.StockOption;
-import oahu.financial.StockOptionPrice;
 import oahu.financial.html.EtradeDownloader;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
+import vega.financial.StockOption.OptionType;
 import vega.financial.calculator.BlackScholes;
+import vega.financial.calculator.OptionCalculator;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import static oahu.financial.StockOption.OptionType;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.offset;
 
@@ -35,7 +34,7 @@ public class TestStockOptionParser2 {
     private StockOptionParser2 stockOptionParser;
     private EtradeDownloader<List<PageInfo>, TickerInfo, Serializable> downloader;
     private final TickerInfo tickerInfo = new TickerInfo("EQNR");
-    private final StockOptionUtils stockOptionUtils = new StockOptionUtils(currentDate);
+    private final StockOptionUtil stockOptionUtils = new StockOptionUtil(currentDate);
 
     @Before
     public void init() {
@@ -52,9 +51,9 @@ public class TestStockOptionParser2 {
 
     @Test
     public void test_stockprice() {
-        var stockPrice = stockOptionParser.stockPrice(tickerInfo, getPage());
-        assertThat(stockPrice).isNotEmpty();
-        var sp = stockPrice.get();
+        var sp = stockOptionParser.stockPrice(tickerInfo, getPage());
+        //assertThat(stockPrice).isNotEmpty();
+        //var sp = stockPrice.get();
         assertThat(sp.getStock()).isNotNull();
         assertThat(sp.getStock().getTicker()).isEqualTo("EQNR");
         assertThat(sp.getOpn()).isEqualTo(180.0);
@@ -67,9 +66,9 @@ public class TestStockOptionParser2 {
     public void test_option_prices() {
         var page = getPage();
         var stockPrice = stockOptionParser.stockPrice(tickerInfo, page);
-        assertThat(stockPrice).isNotEmpty();
+        //assertThat(stockPrice).isNotEmpty();
 
-        var options = stockOptionParser.options(page, stockPrice.get());
+        var options = stockOptionParser.options(page, stockPrice);
         assertThat(options.size()).isEqualTo(66);
 
         testOption(options, "EQNR1L320", OptionType.CALL,320,0.01, 1.20);
@@ -92,7 +91,7 @@ public class TestStockOptionParser2 {
         assertThat(option).isNotEmpty();
 
         option.ifPresent(c -> {
-            StockOptionBean d = (StockOptionBean) c.getDerivative();
+            StockOption d = (StockOption) c.getStockOption();
             assertThat(d).isNotNull();
             assertThat(d.getStock()).isNotNull();
             assertThat(d.getOpType()).isEqualTo(optionType);

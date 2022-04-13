@@ -1,19 +1,20 @@
 package nordnet.html;
 
-import critterrepos.beans.options.StockOptionBean;
-import critterrepos.beans.options.StockOptionPriceBean;
-import critterrepos.utils.StockOptionUtils;
+import critter.repos.StockMarketRepository;
+import critter.stock.Stock;
+import critter.stock.StockPrice;
+import critter.stockoption.StockOption;
+import critter.stockoption.StockOptionPrice;
+import critter.util.StockOptionUtil;
 import nordnet.downloader.PageInfo;
 import nordnet.downloader.TickerInfo;
 import nordnet.redis.NordnetRedis;
-import oahu.dto.Tuple;
 import oahu.exceptions.FinancialException;
-import oahu.financial.*;
-import oahu.financial.repository.StockMarketRepository;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import vega.financial.calculator.OptionCalculator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +31,7 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
     public StockOptionParser2(OptionCalculator optionCalculator,
                               NordnetRedis nordnetRedis,
                               StockMarketRepository stockMarketRepos,
-                              StockOptionUtils stockOptionUtils) {
+                              StockOptionUtil stockOptionUtils) {
         super(stockOptionUtils);
         this.optionCalculator = optionCalculator;
         this.nordnetRedis = nordnetRedis;
@@ -38,13 +39,13 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
     }
 
     @Override
-    public Optional<StockPrice> stockPrice(TickerInfo tickerInfo, PageInfo pageInfo) {
+    public StockPrice stockPrice(TickerInfo tickerInfo, PageInfo pageInfo) {
         Stock stock = stockMarketRepos.findStock(tickerInfo.getTicker());
         var doc = Jsoup.parse(pageInfo.getPage().getWebResponse().getContentAsString());
         return createStockPrice(doc, stock);
     }
 
-    private Optional<StockPrice> createStockPrice(Document doc, Stock stock) {
+    private StockPrice createStockPrice(Document doc, Stock stock) {
         double opn = nordnetRedis.fetchPrice(stock.getTicker());
         var rows = doc.select("[role=row]");
         var row = rows.get(1);
@@ -54,17 +55,17 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
             var hi = elementToDouble(arias.get(5));
             var lo = elementToDouble(arias.get(6));
             var stockPrice = createStockPrice(opn, hi, lo, cls, stock);
-            return Optional.of(stockPrice);
+            return stockPrice;
         }
         catch (Exception ex) {
-            return Optional.empty();
+            return null;
         }
     }
 
 
     @Override
     public Collection<StockOptionPrice> options(PageInfo pageInfo, StockPrice stockPrice) {
-        Collection<StockOptionPrice> result = new ArrayList<>();
+        var result = new ArrayList<StockOptionPrice>();
         var doc = Jsoup.parse(pageInfo.getPage().getWebResponse().getContentAsString());
         var rows = doc.select("[role=row]");
         int sz = rows.size();
@@ -109,8 +110,8 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
 
             StockOption stockOption = fetchOrCreateStockOption(ticker, x, ot, stockPrice);
 
-            StockOptionPriceBean price = new StockOptionPriceBean();
-            price.setDerivative(stockOption);
+            var price = new StockOptionPrice();
+            price.setStockOption(stockOption);
             price.setStockPrice(stockPrice);
             price.setBuy(bid);
             price.setSell(ask);
@@ -128,18 +129,18 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
                                                  StockOption.OptionType optionType,
                                                  StockPrice stockPrice) {
 
-        Optional<StockOption> result = stockMarketRepos.findDerivative(ticker);
+        Optional<StockOption> result = stockMarketRepos.findStockOption(ticker);
 
         if (result.isPresent()) {
             return result.get();
         }
         else {
-            StockOptionBean so = new StockOptionBean();
+            var so = new StockOption();
             so.setTicker(ticker);
             so.setLifeCycle(StockOption.LifeCycle.FROM_HTML);
             so.setOpType(optionType);
             so.setX(x);
-            so.setStockOptionUtils(stockOptionUtils);
+            so.setStockOptionUtil(stockOptionUtil);
             so.setStock(stockPrice.getStock());
             return so;
         }
