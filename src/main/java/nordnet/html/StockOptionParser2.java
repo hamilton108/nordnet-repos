@@ -12,7 +12,6 @@ import nordnet.redis.NordnetRedis;
 import oahu.exceptions.FinancialException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import vega.financial.calculator.OptionCalculator;
 
@@ -20,22 +19,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
-import static nordnet.html.StockOptionEnum.X;
-
 public class StockOptionParser2 extends  StockOptionParserBase implements StockOptionParser {
 
-    private final OptionCalculator optionCalculator;
-    private final NordnetRedis nordnetRedis;
-    private final StockMarketRepository stockMarketRepos;
 
     public StockOptionParser2(OptionCalculator optionCalculator,
                               NordnetRedis nordnetRedis,
                               StockMarketRepository stockMarketRepos,
                               StockOptionUtil stockOptionUtils) {
-        super(stockOptionUtils);
-        this.optionCalculator = optionCalculator;
-        this.nordnetRedis = nordnetRedis;
-        this.stockMarketRepos = stockMarketRepos;
+        super(optionCalculator, nordnetRedis, stockMarketRepos, stockOptionUtils);
     }
 
     @Override
@@ -96,10 +87,10 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
     }
 
     private Optional<StockOptionPrice> createOption(Elements arias,
-                                                    Elements optionNames,
-                                                    double x,
-                                                    StockPrice stockPrice,
-                                                    StockOption.OptionType ot) {
+                                                      Elements optionNames,
+                                                      double x,
+                                                      StockPrice stockPrice,
+                                                      StockOption.OptionType ot) {
         try {
             int tickerIndex = ot == StockOption.OptionType.CALL ?  2 : 3;
             int bidIndex = ot == StockOption.OptionType.CALL ?  0 : 10;
@@ -124,32 +115,6 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
         }
     }
 
-    private StockOption fetchOrCreateStockOption(String ticker,
-                                                 double x,
-                                                 StockOption.OptionType optionType,
-                                                 StockPrice stockPrice) {
-
-        Optional<StockOption> result = stockMarketRepos.findStockOption(ticker);
-
-        if (result.isPresent()) {
-            return result.get();
-        }
-        else {
-            var so = new StockOption();
-            so.setTicker(ticker);
-            so.setLifeCycle(StockOption.LifeCycle.FROM_HTML);
-            so.setOpType(optionType);
-            so.setX(x);
-            so.setStockOptionUtil(stockOptionUtil);
-            so.setStock(stockPrice.getStock());
-            return so;
-        }
-    }
-
-    private double elementToDouble(Element el) {
-        var s = el.text();
-        return Double.parseDouble(s.replace(",", "."));
-    }
 
     /*
     private Tuple<Optional<StockOptionPrice>> createCallAndPut(Element el, StockPrice stockPrice) {

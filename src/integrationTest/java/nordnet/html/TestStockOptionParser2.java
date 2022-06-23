@@ -63,6 +63,19 @@ public class TestStockOptionParser2 {
     }
 
     @Test
+    public void test_stockprice_yar() {
+        TickerInfo tickerInfo2 = new TickerInfo("YAR");
+        List<PageInfo> pages = downloader.downloadDerivatives(tickerInfo2);
+        var page = pages.get(0);
+        var sp = stockOptionParser.stockPrice(tickerInfo2, page);
+        assertThat(sp.getStock().getTicker()).isEqualTo("YAR");
+
+        var options = stockOptionParser.options(page, sp);
+
+
+    }
+
+    @Test
     public void test_option_prices() {
         var page = getPage();
         var stockPrice = stockOptionParser.stockPrice(tickerInfo, page);
