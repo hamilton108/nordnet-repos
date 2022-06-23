@@ -27,18 +27,13 @@ import static vega.financial.StockOption.OptionType.CALL;
 import static vega.financial.StockOption.OptionType.PUT;
 
 public class StockOptionParser1 extends  StockOptionParserBase implements StockOptionParser {
-    private final OptionCalculator optionCalculator;
-    private final NordnetRedis nordnetRedis;
-    private final StockMarketRepository<String,String> stockMarketRepos;
 
     public StockOptionParser1(OptionCalculator optionCalculator,
                               NordnetRedis nordnetRedis,
                               StockMarketRepository<String,String> stockMarketRepos,
                               StockOptionUtil stockOptionUtil) {
-        super(stockOptionUtil);
-        this.optionCalculator = optionCalculator;
-        this.nordnetRedis = nordnetRedis;
-        this.stockMarketRepos = stockMarketRepos;
+        //super(stockOptionUtil);
+        super(optionCalculator, nordnetRedis, stockMarketRepos, stockOptionUtil);
     }
 
     @Override
