@@ -1,5 +1,6 @@
 package nordnet.html;
 
+import critter.stockoption.StockOptionPrice;
 import critter.util.StockOptionUtil;
 import nordnet.downloader.DownloaderStub;
 import nordnet.downloader.PageInfo;
@@ -16,6 +17,7 @@ import vega.financial.calculator.OptionCalculator;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,7 +63,23 @@ public class TestStockOptionParser3 {
         var stockPrice = stockOptionParser.stockPrice(tickerInfo, page);
 
         var options = stockOptionParser.options(page, stockPrice);
-        assertThat(options.size()).isEqualTo(66);
+        assertThat(options.size()).isEqualTo(16);
+
+        var call_2f_550 = findOption("YAR2F550", options);
+        assertThat(call_2f_550).isNotNull();
+        assertThat(call_2f_550.getBuy()).isEqualTo(0.85);
+        assertThat(call_2f_550.getSell()).isEqualTo(1.25);
+        assertThat(call_2f_550.getX()).isEqualTo(550);
+
+        var put_2f_550 = findOption("YAR2R550", options);
+        assertThat(put_2f_550).isNotNull();
+        assertThat(put_2f_550.getBuy()).isEqualTo(61.75);
+        assertThat(put_2f_550.getSell()).isEqualTo(64.75);
+        assertThat(put_2f_550.getX()).isEqualTo(550);
+    }
+
+    private StockOptionPrice findOption(String ticker, Collection<StockOptionPrice> prices) {
+        return prices.stream().filter(x -> ((critter.stockoption.StockOption)x.getStockOption()).getTicker().equals(ticker)).findAny().orElse(null);
     }
 
     @Test

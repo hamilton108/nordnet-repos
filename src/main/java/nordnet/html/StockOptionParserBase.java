@@ -4,6 +4,7 @@ import critter.repos.StockMarketRepository;
 import critter.stock.Stock;
 import critter.stock.StockPrice;
 import critter.stockoption.StockOption;
+import critter.stockoption.StockOptionPrice;
 import critter.util.StockOptionUtil;
 import nordnet.redis.NordnetRedis;
 import org.jsoup.nodes.Element;
@@ -68,5 +69,20 @@ public abstract class StockOptionParserBase {
             so.setStock(stockPrice.getStock());
             return so;
         }
+    }
+    protected StockOptionPrice createStockOptionPrice(StockPrice stockPrice,
+                                                      String optionTicker,
+                                                      StockOption.OptionType optionType,
+                                                      double bid,
+                                                      double ask,
+                                                      double x) {
+        StockOption callOption = fetchOrCreateStockOption(optionTicker, x, optionType, stockPrice);
+        var price = new StockOptionPrice();
+        price.setStockOption(callOption);
+        price.setStockPrice(stockPrice);
+        price.setBuy(bid);
+        price.setSell(ask);
+        price.setCalculator(optionCalculator);
+        return price;
     }
 }

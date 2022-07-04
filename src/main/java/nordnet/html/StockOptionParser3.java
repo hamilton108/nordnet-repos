@@ -12,12 +12,14 @@ import nordnet.redis.NordnetRedis;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import vega.financial.calculator.OptionCalculator;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Optional;
+import java.util.regex.Pattern;
+
+import static vega.financial.StockOption.OptionType.CALL;
+import static vega.financial.StockOption.OptionType.PUT;
 
 public class StockOptionParser3 extends  StockOptionParserBase implements StockOptionParser {
 
@@ -31,9 +33,10 @@ public class StockOptionParser3 extends  StockOptionParserBase implements StockO
 
     private final int X = 7;
 
-    private final int PUT_BID = 9;
     private final int PUT_ASK = 10;
     private final int PUT_TICKER = 13;
+
+    private final Pattern pattern = Pattern.compile("\\D{3}\\d\\D\\d+", Pattern.CASE_INSENSITIVE);
 
     public StockOptionParser3(OptionCalculator optionCalculator,
                               NordnetRedis nordnetRedis,
@@ -79,42 +82,46 @@ public class StockOptionParser3 extends  StockOptionParserBase implements StockO
 
         for (var el : elements) {
             if (el.children().size() == 16) {
-                //System.out.println(el);
-                var row = el.children();
-                var callTickerText = el2str(row.get(CALL_TICKER));
-                System.out.println(callTickerText);
-                var callTicker = elementToTicker(callTickerText);
-                if (callTicker == null) {
-                    continue;
+                try {
+                    var row = el.children();
+                    var callTickerText = el2str(row.get(CALL_TICKER));
+                    var callTicker = elementToTicker(callTickerText);
+                    if (callTicker == null) {
+                        continue;
+                    }
+                    var putTicker = elementToTicker(el2str(row.get(PUT_TICKER)));
+
+                    // System.out.printf("Call: %s, put: %s\n", callTicker, putTicker);
+
+                    var callBid = str2double(el2str(row.get(CALL_BID)));
+                    var callAsk = str2double(el2str(row.get(CALL_ASK)));
+                    int PUT_BID = 9;
+                    var putBid = str2double(el2str(row.get(PUT_BID)));
+                    var putAsk = str2double(el2str(row.get(PUT_ASK)));
+                    var x = str2double(el2str(row.get(X)));
+
+                    var callPrice = createStockOptionPrice(stockPrice, callTicker, CALL, callBid, callAsk, x);
+                    result.add(callPrice);
+                    var putPrice = createStockOptionPrice(stockPrice, putTicker, PUT, putBid, putAsk, x);
+                    result.add(putPrice);
                 }
-                var putTicker = elementToTicker(el2str(row.get(PUT_TICKER)));
-                var callBid = str2double(el2str(row.get(CALL_BID)));
-                var callAsk = str2double(el2str(row.get(CALL_ASK)));
-                var putBid = str2double(el2str(row.get(PUT_BID)));
-                var putAsk = str2double(el2str(row.get(PUT_ASK)));
-                var x = str2double(el2str(row.get(X)));
+                catch (Exception ex) {
+                    System.out.println(ex.getMessage());
+                }
             }
         }
 
         return result;
     }
 
-    private StockOptionPrice createOption(String ticker,
-                                          double x,
-                                          StockPrice stockPrice,
-                                          StockOption.OptionType ot) {
-        StockOption stockOption = fetchOrCreateStockOption(ticker, x, ot, stockPrice);
-        return null;
-    }
-
     public String elementToTicker(String elementText) {
         var l1 = elementText.split("\\s");
-        var l2 = l1[1].split("\\.");
-        if (l2.length > 1) {
-            return null;
+        var m =  pattern.matcher(l1[1]);
+        if (m.matches()) {
+            return l1[1];
         }
         else {
-            return l2[0];
+            return null;
         }
     }
 

@@ -99,6 +99,7 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
             var ask = elementToDouble(arias.get(askIndex));
             var ticker = optionNames.get(tickerIndex).text().strip();
 
+            /*
             StockOption stockOption = fetchOrCreateStockOption(ticker, x, ot, stockPrice);
 
             var price = new StockOptionPrice();
@@ -107,7 +108,8 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
             price.setBuy(bid);
             price.setSell(ask);
             price.setCalculator(optionCalculator);
-
+             */
+            var price = createStockOptionPrice(stockPrice,ticker,ot,bid,ask,x);
             return Optional.of(price);
         }
         catch (NumberFormatException | NullPointerException ex) {
