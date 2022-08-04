@@ -10,6 +10,7 @@ import nordnet.redis.NordnetRedis;
 import nordnet.repos.StockMarketReposStub;
 import oahu.financial.html.EtradeDownloader;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -49,6 +50,7 @@ public class TestStockOptionParser2 {
                 stockOptionUtils);
     }
 
+    @Ignore
     @Test
     public void test_stockprice() {
         var sp = stockOptionParser.stockPrice(tickerInfo, getPage());
@@ -62,6 +64,7 @@ public class TestStockOptionParser2 {
         assertThat(sp.getCls()).isEqualTo(175.56);
     }
 
+    @Ignore
     @Test
     public void test_stockprice_yar() {
         TickerInfo tickerInfo2 = new TickerInfo("YAR");
@@ -75,6 +78,7 @@ public class TestStockOptionParser2 {
 
     }
 
+    @Ignore
     @Test
     public void test_option_prices() {
         var page = getPage();
