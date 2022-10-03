@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public class StockMarketReposStub implements StockMarketRepository<String,String> {
+public class StockMarketReposStub implements StockMarketRepository<Integer,String> {
 
     public void insertDerivative(StockOption stockOption) {
 
@@ -25,8 +25,17 @@ public class StockMarketReposStub implements StockMarketRepository<String,String
     }
 
     @Override
-    public Stock findStock(String ticker) {
-        return createStock(getOidFor(ticker), ticker);
+    public Stock findStock(Integer oid) {
+        switch (oid) {
+            case 1:
+                return createStock(1, "NHY");
+            case 2:
+                return createStock(2, "EQNR");
+            case 3:
+                return createStock(3, "YAR");
+            default:
+                return null;
+        }
     }
 
     @Override
@@ -131,6 +140,11 @@ public class StockMarketReposStub implements StockMarketRepository<String,String
     }
 
     public List<StockOptionPurchase> activePurchasesWithCritters(int purchaseType) {
+        return null;
+    }
+
+    @Override
+    public List<StockOptionPurchase> purchasesWithSalesAll(int purchaseType, int status, vega.financial.StockOption.OptionType ot) {
         return null;
     }
 }

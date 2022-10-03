@@ -15,7 +15,7 @@ import java.util.Optional;
 public abstract class StockOptionParserBase {
     protected final OptionCalculator optionCalculator;
     protected final StockOptionUtil stockOptionUtil;
-    protected final StockMarketRepository stockMarketRepos;
+    protected final StockMarketRepository<Integer,String> stockMarketRepos;
     protected final NordnetRedis nordnetRedis;
 
     public StockOptionParserBase(OptionCalculator optionCalculator,

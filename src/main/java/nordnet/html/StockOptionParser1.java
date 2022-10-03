@@ -37,8 +37,8 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
     }
 
     @Override
-    public StockPrice stockPrice(TickerInfo tickerInfo, PageInfo pageInfo) {
-        Stock stock = stockMarketRepos.findStock(tickerInfo.getTicker());
+    public StockPrice stockPrice(int oid, PageInfo pageInfo) {
+        Stock stock = stockMarketRepos.findStock(oid);
         var doc = Jsoup.parse(pageInfo.getPage().getWebResponse().getContentAsString());
         return createStockPrice(doc, stock);
     }

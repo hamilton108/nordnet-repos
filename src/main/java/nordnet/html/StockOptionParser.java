@@ -8,6 +8,6 @@ import nordnet.downloader.TickerInfo;
 import java.util.Collection;
 
 public interface StockOptionParser {
-    StockPrice stockPrice(TickerInfo tickerInfo, PageInfo pageInfo);
+    StockPrice stockPrice(int oid, PageInfo pageInfo);
     Collection<StockOptionPrice> options(PageInfo pageInfo, StockPrice stockPrice);
 }
