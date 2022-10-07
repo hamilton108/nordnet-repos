@@ -30,7 +30,7 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
 
     public StockOptionParser1(OptionCalculator optionCalculator,
                               NordnetRedis nordnetRedis,
-                              StockMarketRepository<String,String> stockMarketRepos,
+                              StockMarketRepository<Integer,String> stockMarketRepos,
                               StockOptionUtil stockOptionUtil) {
         //super(stockOptionUtil);
         super(optionCalculator, nordnetRedis, stockMarketRepos, stockOptionUtil);

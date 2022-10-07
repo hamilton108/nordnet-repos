@@ -33,6 +33,7 @@ public class TestStockOptionParser1 {
     private StockOptionParser1 stockOptionParser1;
     private EtradeDownloader<List<PageInfo>, TickerInfo, Serializable> downloader;
     private final TickerInfo tickerInfo = new TickerInfo("EQNR");
+    private final int OID_EQNR = 2;
     private final StockOptionUtil stockOptionUtils = new StockOptionUtil(currentDate);
 
     @Before
@@ -69,7 +70,7 @@ public class TestStockOptionParser1 {
     @Ignore
     @Test
     public void test_stockprice() {
-        var sp = stockOptionParser1.stockPrice(tickerInfo, getPage());
+        var sp = stockOptionParser1.stockPrice(OID_EQNR, getPage());
         //assertThat(stockPrice).isNotEmpty();
         //var sp = stockPrice.get();
         assertThat(sp.getStock()).isNotNull();
@@ -99,7 +100,7 @@ public class TestStockOptionParser1 {
     @Test
     public void test_option_prices() {
         var page = getPage();
-        var sp = stockOptionParser1.stockPrice(tickerInfo, page);
+        var sp = stockOptionParser1.stockPrice(OID_EQNR, page);
         //assertThat(stockPrice).isNotEmpty();
         //var options = stockOptionParser1.options(page, stockPrice.get());
         var options = stockOptionParser1.options(page, sp);

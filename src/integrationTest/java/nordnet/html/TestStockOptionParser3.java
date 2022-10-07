@@ -29,6 +29,8 @@ public class TestStockOptionParser3 {
     private StockOptionParser3 stockOptionParser;
     private EtradeDownloader<List<PageInfo>, TickerInfo, Serializable> downloader;
     private final TickerInfo tickerInfo = new TickerInfo("YAR");
+
+    private final int OID_YAR = 3;
     private final StockOptionUtil stockOptionUtils = new StockOptionUtil(currentDate);
 
     @Before
@@ -46,7 +48,7 @@ public class TestStockOptionParser3 {
 
     @Test
     public void test_stockprice() {
-        var sp = stockOptionParser.stockPrice(tickerInfo, getPage());
+        var sp = stockOptionParser.stockPrice(OID_YAR, getPage());
         //assertThat(stockPrice).isNotEmpty();
         //var sp = stockPrice.get();
         assertThat(sp.getStock()).isNotNull();
@@ -60,7 +62,7 @@ public class TestStockOptionParser3 {
     @Test
     public void test_option_prices() {
         var page = getPage();
-        var stockPrice = stockOptionParser.stockPrice(tickerInfo, page);
+        var stockPrice = stockOptionParser.stockPrice(OID_YAR, page);
 
         var options = stockOptionParser.options(page, stockPrice);
         assertThat(options.size()).isEqualTo(16);
