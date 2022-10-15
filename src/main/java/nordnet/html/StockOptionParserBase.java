@@ -57,7 +57,10 @@ public abstract class StockOptionParserBase {
         Optional<StockOption> result = stockMarketRepos.findStockOption(ticker);
 
         if (result.isPresent()) {
-            return result.get();
+            var so = result.get();
+            so.setLifeCycle(StockOption.LifeCycle.FROM_DATABASE);
+            so.setStockOptionUtil(stockOptionUtil);
+            return so;
         }
         else {
             var so = new StockOption();
