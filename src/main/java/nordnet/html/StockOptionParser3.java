@@ -4,15 +4,14 @@ import critter.repos.StockMarketRepository;
 import critter.stock.Stock;
 import critter.stock.StockPrice;
 import critter.stockoption.StockOptionPrice;
-import critter.util.StockOptionUtil;
 import nordnet.downloader.PageInfo;
-import nordnet.downloader.TickerInfo;
-import nordnet.redis.NordnetRedis;
+import nordnet.financial.OpeningPrices;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import vega.financial.calculator.OptionCalculator;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Pattern;
@@ -36,13 +35,13 @@ public class StockOptionParser3 extends StockOptionParserBase implements StockOp
     private final int PUT_ASK = 10;
     private final int PUT_TICKER = 13;
 
-    private final Pattern pattern = Pattern.compile("\\D{3}\\d\\D\\d+", Pattern.CASE_INSENSITIVE);
+    private final Pattern pattern = Pattern.compile("\\D+\\d\\D.*", Pattern.CASE_INSENSITIVE);
 
     public StockOptionParser3(OptionCalculator optionCalculator,
-            NordnetRedis nordnetRedis,
+            OpeningPrices openingPrices,
             StockMarketRepository stockMarketRepos,
-            StockOptionUtil stockOptionUtils) {
-        super(optionCalculator, nordnetRedis, stockMarketRepos, stockOptionUtils);
+            LocalDate currentDate) {
+        super(optionCalculator, openingPrices, stockMarketRepos, currentDate);
     }
 
     @Override
@@ -53,7 +52,7 @@ public class StockOptionParser3 extends StockOptionParserBase implements StockOp
     }
 
     private StockPrice createStockPrice(Document doc, Stock stock) {
-        double opn = nordnetRedis.fetchPrice(stock.getTicker());
+        double opn = openingPrices.fetchPrice(stock.getTicker());
         var elements = doc.select(".bRPJha");
         try {
             var spRow = elements.get(0).children();

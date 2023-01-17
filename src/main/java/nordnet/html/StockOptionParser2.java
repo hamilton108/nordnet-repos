@@ -7,14 +7,14 @@ import critter.stockoption.StockOption;
 import critter.stockoption.StockOptionPrice;
 import critter.util.StockOptionUtil;
 import nordnet.downloader.PageInfo;
-import nordnet.downloader.TickerInfo;
-import nordnet.redis.NordnetRedis;
+import nordnet.financial.OpeningPrices;
 import oahu.exceptions.FinancialException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import vega.financial.calculator.OptionCalculator;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
@@ -23,10 +23,10 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
 
 
     public StockOptionParser2(OptionCalculator optionCalculator,
-                              NordnetRedis nordnetRedis,
+                              OpeningPrices openingPrices,
                               StockMarketRepository stockMarketRepos,
-                              StockOptionUtil stockOptionUtils) {
-        super(optionCalculator, nordnetRedis, stockMarketRepos, stockOptionUtils);
+                              LocalDate currentDate) {
+        super(optionCalculator, openingPrices, stockMarketRepos, currentDate);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class StockOptionParser2 extends  StockOptionParserBase implements StockO
     }
 
     private StockPrice createStockPrice(Document doc, Stock stock) {
-        double opn = nordnetRedis.fetchPrice(stock.getTicker());
+        double opn = openingPrices.fetchPrice(stock.getTicker());
         var rows = doc.select("[role=row]");
         var row = rows.get(1);
         var arias= row.select("[aria-hidden=true]");

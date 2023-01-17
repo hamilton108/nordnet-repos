@@ -6,26 +6,28 @@ import critter.stock.StockPrice;
 import critter.stockoption.StockOption;
 import critter.stockoption.StockOptionPrice;
 import critter.util.StockOptionUtil;
-import nordnet.redis.NordnetRedis;
+import nordnet.financial.OpeningPrices;
 import org.jsoup.nodes.Element;
 import vega.financial.calculator.OptionCalculator;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 public abstract class StockOptionParserBase {
     protected final OptionCalculator optionCalculator;
-    protected final StockOptionUtil stockOptionUtil;
+    //protected final StockOptionUtil stockOptionUtil;
     protected final StockMarketRepository<Integer,String> stockMarketRepos;
-    protected final NordnetRedis nordnetRedis;
+    protected final OpeningPrices openingPrices;
+    protected final LocalDate currentDate;
 
     public StockOptionParserBase(OptionCalculator optionCalculator,
-                                 NordnetRedis nordnetRedis,
+                                 OpeningPrices nordnetRedis,
                                  StockMarketRepository stockMarketRepos,
-                                 StockOptionUtil stockOptionUtil) {
+                                 LocalDate currentDate) {
         this.optionCalculator = optionCalculator;
         this.stockMarketRepos = stockMarketRepos;
-        this.nordnetRedis = nordnetRedis;
-        this.stockOptionUtil = stockOptionUtil;
+        this.openingPrices = nordnetRedis;
+        this.currentDate = currentDate;
     }
     protected StockPrice createStockPrice(double opn,
                                           double hi,
@@ -39,7 +41,7 @@ public abstract class StockOptionParserBase {
         result.setCls(cls);
         result.setStock(stock);
         result.setVolume(1000);
-        result.setLocalDx(stockOptionUtil.getCurrentDate());
+        result.setLocalDx(currentDate);
         return result;
     }
     protected double elementToDouble(Element el) {
@@ -59,7 +61,8 @@ public abstract class StockOptionParserBase {
         if (result.isPresent()) {
             var so = result.get();
             so.setLifeCycle(StockOption.LifeCycle.FROM_DATABASE);
-            so.setStockOptionUtil(stockOptionUtil);
+            //so.setStockOptionUtil(stockOptionUtil);
+            so.setCurrentDate(currentDate);
             return so;
         }
         else {
@@ -68,7 +71,8 @@ public abstract class StockOptionParserBase {
             so.setLifeCycle(StockOption.LifeCycle.FROM_HTML);
             so.setOpType(optionType);
             so.setX(x);
-            so.setStockOptionUtil(stockOptionUtil);
+            //so.setStockOptionUtil(stockOptionUtil);
+            so.setCurrentDate(currentDate);
             so.setStock(stockPrice.getStock());
             return so;
         }

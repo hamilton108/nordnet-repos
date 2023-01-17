@@ -6,9 +6,8 @@ import critter.stock.StockPrice;
 import critter.stockoption.StockOption;
 import critter.stockoption.StockOptionPrice;
 import critter.util.StockOptionUtil;
-import nordnet.redis.NordnetRedis;
 import nordnet.downloader.PageInfo;
-import nordnet.downloader.TickerInfo;
+import nordnet.financial.OpeningPrices;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,24 +15,24 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import vega.financial.calculator.OptionCalculator;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static nordnet.html.StockOptionEnum.*;
-import static nordnet.html.StockOptionEnum.STOCK_PRICE_LO;
 import static vega.financial.StockOption.OptionType.CALL;
 import static vega.financial.StockOption.OptionType.PUT;
 
 public class StockOptionParser1 extends  StockOptionParserBase implements StockOptionParser {
 
     public StockOptionParser1(OptionCalculator optionCalculator,
-                              NordnetRedis nordnetRedis,
+                              OpeningPrices openingPrices,
                               StockMarketRepository<Integer,String> stockMarketRepos,
-                              StockOptionUtil stockOptionUtil) {
+                              LocalDate currentDate) {
         //super(stockOptionUtil);
-        super(optionCalculator, nordnetRedis, stockMarketRepos, stockOptionUtil);
+        super(optionCalculator, openingPrices, stockMarketRepos, currentDate);
     }
 
     @Override
@@ -142,7 +141,8 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
             Element xe = tds.get(X.getIndex());
             double x = Util.parseExercisePrice(xe.text());
             derivative2.setX(x);
-            derivative2.setStockOptionUtil(stockOptionUtil);
+            derivative2.setCurrentDate(currentDate);
+
 
             // ===>>>
 
@@ -190,7 +190,7 @@ public class StockOptionParser1 extends  StockOptionParserBase implements StockO
         return Util.decimalStringToDouble(td.text());
     }
     private double fetchOpeningPrice(String ticker) {
-        return nordnetRedis.fetchPrice(ticker);
+        return openingPrices.fetchPrice(ticker);
     }
 }
 
